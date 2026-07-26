@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.36]
+
 ### Added
 
 - Product demo WebM recorder tool `chrome_demo_recorder` (`start` / `step` / `stop`) with `product` and `compact` presets, step title/narration overlays, and a step timeline for subtitles.
+- MCP cursor overlays for click/drag while recording demos.
+
+### Changed
+
+- Demo WebM encoding prefers higher-bitrate VP8 for clearer fullscreen playback.
+- Bumped native bridge, Chrome extension, and shared package versions to `1.0.36`.
 
 ## [v1.0.35]
 

@@ -9,9 +9,17 @@
 
 ## [Unreleased]
 
+## [v1.0.36]
+
 ### 新增
 
 - 产品讲解 WebM 录制工具 `chrome_demo_recorder`（`start` / `step` / `stop`），支持 `product` / `compact` 预设、分步标题/旁白字幕，以及可用于生成字幕的步骤时间轴。
+- 录制演示时的 MCP 光标点击/拖拽覆盖层。
+
+### 变更
+
+- Demo WebM 编码优先使用更高码率的 VP8，全屏播放更清晰。
+- 将 native bridge、Chrome 扩展与 shared 包版本提升至 `1.0.36`。
 
 ## [v1.0.35]
 
