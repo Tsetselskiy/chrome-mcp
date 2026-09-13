@@ -57,10 +57,10 @@ The benchmark suite defines three representative task categories. Each task star
   Navigate to the Origin Hub dispatch manifest at http://localhost:12399/multihop/site-a.html. Find the transfer auth token and shipment ID. Then proceed to the Fulfillment Gateway at http://localhost:12399/multihop/site-b.html, enter both the shipment ID and transfer auth token into the authorization form, and authorize the dispatch. Confirm that authorization code DISPATCHED-OK-2026 is displayed.
   ```
 - **Success Criteria:**
-  1. Navigated to Site A; extracted shipment ID `SHP-88301` and token `XFER-SEC-9204-VALID`.
+  1. Navigated to Site A; extracted shipment ID `SHP-88301` and token `BENCHMARK-CODE-9204`.
   2. Navigated to Site B (`/multihop/site-b.html`).
   3. Input `#input-shipment-id` filled with `SHP-88301`.
-  4. Input `#input-token` filled with `XFER-SEC-9204-VALID`.
+  4. Input `#input-token` filled with `BENCHMARK-CODE-9204`.
   5. Button `#authorize-dispatch-btn` clicked.
   6. Final message `#dispatch-banner` displays confirmation code `DISPATCHED-OK-2026`.
 - **Verification Routine:** `tasks.mjs` -> `verifyMultiHopTask`.
