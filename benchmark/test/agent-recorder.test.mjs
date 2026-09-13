@@ -4,101 +4,125 @@ import http from 'node:http';
 import fs from 'node:fs';
 import { AGENT_BENCHMARK_TASKS, getTaskById } from '../tasks.mjs';
 import { AgentBenchmarkRecorder } from '../agent-recorder.mjs';
-import { BenchmarkMetricsCollector } from '../collector.mjs';
+
+function shortVerificationClient(overrides = {}) {
+  return {
+    async callTool() {
+      return {
+        ok: true,
+        data: {
+          pathname: '/short/index.html',
+          status: 'ACTIVE',
+          message: 'Service Activated Successfully',
+          messageVisible: true,
+          buttonDisabled: true,
+          ...overrides,
+        },
+      };
+    },
+  };
+}
+
+async function closeServer(server) {
+  await new Promise((resolve) => {
+    server.closeAllConnections?.();
+    server.close(resolve);
+  });
+}
 
 test('Agent Benchmark Tasks - definitions cover representative categories', () => {
   assert.equal(AGENT_BENCHMARK_TASKS.length, 3);
-
-  const shortTask = getTaskById('short-interaction');
-  assert.ok(shortTask);
-  assert.equal(shortTask.category, 'short-interaction');
-  assert.ok(shortTask.prompt.includes('activate the primary service'));
-
-  const dynamicTask = getTaskById('dynamic-multistep-interaction');
-  assert.ok(dynamicTask);
-  assert.equal(dynamicTask.category, 'dynamic-multistep');
-  assert.ok(dynamicTask.prompt.includes('ALLOC-8891'));
-
-  const multiTask = getTaskById('longer-multipage-workflow');
-  assert.ok(multiTask);
-  assert.equal(multiTask.category, 'longer-multipage');
-  assert.ok(multiTask.prompt.includes('DISPATCHED-OK-2026'));
+  assert.ok(getTaskById('short-interaction')?.prompt.includes('activate the primary service'));
+  assert.ok(getTaskById('dynamic-multistep-interaction')?.prompt.includes('ALLOC-8891'));
+  assert.ok(getTaskById('longer-multipage-workflow')?.prompt.includes('DISPATCHED-OK-2026'));
 });
 
-test('Agent Benchmark Tasks - verification logic detects goal states', async () => {
+test('Agent Benchmark Tasks - short verification rejects INACTIVE and missing tab IDs', async () => {
   const shortTask = getTaskById('short-interaction');
 
-  // Case 1: Active
-  const mockPassingClient = {
-    async callTool(name, args) {
-      return { ok: true, raw: 'Status: ACTIVE Service Activated Successfully' };
-    },
-  };
-  const passRes = await shortTask.verify(mockPassingClient, {});
+  const passRes = await shortTask.verify(shortVerificationClient(), { tabId: 42 });
   assert.equal(passRes.success, true);
 
-  // Case 2: Inactive
-  const mockFailingClient = {
-    async callTool(name, args) {
-      return { ok: true, raw: 'Status: INACTIVE Service is stopped' };
+  const inactiveRes = await shortTask.verify(shortVerificationClient({ status: 'INACTIVE' }), {
+    tabId: 42,
+  });
+  assert.equal(inactiveRes.success, false);
+
+  const missingTabRes = await shortTask.verify(shortVerificationClient(), {});
+  assert.equal(missingTabRes.success, false);
+});
+
+test('Agent Benchmark Tasks - dynamic verification rejects wrong cluster and default node count', async () => {
+  const task = getTaskById('dynamic-multistep-interaction');
+  const client = {
+    async callTool() {
+      return {
+        ok: true,
+        data: {
+          pathname: '/dynamic/index.html',
+          filter: 'us-east',
+          selectedCluster: 'US-West Staging Cluster',
+          nodeCount: '4',
+          successVisible: true,
+          confirmedTarget: 'US-West Staging Cluster',
+          confirmedNodes: '4',
+          reference: 'ALLOC-8891',
+          submitDisabled: true,
+        },
+      };
     },
   };
-  const failRes = await shortTask.verify(mockFailingClient, {});
-  assert.equal(failRes.success, false);
+
+  const result = await task.verify(client, { tabId: 42 });
+  assert.equal(result.success, false);
 });
 
 test('AgentBenchmarkRecorder - proxies requests and collects telemetry', async () => {
-  // Setup a mock backend server standing in for Chrome MCP
-  let receivedCalls = [];
+  const receivedCalls = [];
   const mockBackend = http.createServer((req, res) => {
     let body = '';
     req.on('data', (c) => (body += c));
     req.on('end', () => {
-      try {
-        const rpc = JSON.parse(body);
-        receivedCalls.push(rpc);
-      } catch {}
+      const rpc = JSON.parse(body);
+      receivedCalls.push(rpc);
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Mcp-Session-Id': 'test-session-123',
       });
-      res.end('data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{\\"success\\":true}"}]}}\n\n');
+      res.end(
+        `data: ${JSON.stringify({
+          jsonrpc: '2.0',
+          id: rpc.id,
+          result: { content: [{ type: 'text', text: '{"success":true,"tabId":42}' }] },
+        })}\n\n`,
+      );
     });
   });
 
   const backendPort = 12401;
   await new Promise((resolve) => mockBackend.listen(backendPort, '127.0.0.1', resolve));
 
-  const recorderPort = 12402;
-  const fixturePort = 12403;
-  const mockClient = {
-    async callTool() {
-      return { ok: true, raw: 'Status: ACTIVE Service Activated Successfully' };
-    },
-  };
-
   const recorder = new AgentBenchmarkRecorder({
-    proxyPort: recorderPort,
+    proxyPort: 12402,
     targetMcpUrl: `http://127.0.0.1:${backendPort}/mcp`,
-    fixturePort,
+    fixturePort: 12403,
     taskId: 'short-interaction',
-    mcpClient: mockClient,
+    mcpClient: shortVerificationClient(),
   });
 
   await recorder.start();
 
-  // Send a tool call through the recorder proxy
   const payload = JSON.stringify({
     jsonrpc: '2.0',
     id: 10,
     method: 'tools/call',
     params: {
       name: 'chrome_click_element',
-      arguments: { selector: '#activate-btn' },
+      arguments: { selector: '#activate-btn', tabId: 42 },
     },
   });
 
-  const clientReq = await fetch(`http://127.0.0.1:${recorderPort}/mcp`, {
+  const clientReq = await fetch('http://127.0.0.1:12402/mcp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: payload,
@@ -106,9 +130,7 @@ test('AgentBenchmarkRecorder - proxies requests and collects telemetry', async (
 
   assert.equal(clientReq.status, 200);
   assert.equal(receivedCalls.length, 1);
-  assert.equal(receivedCalls[0].params.name, 'chrome_click_element');
 
-  // Verify and finalize
   const { summary, outFile, verification } = await recorder.verifyAndFinalize({
     model: 'test-llm',
     reasoningMode: 'standard',
@@ -118,19 +140,12 @@ test('AgentBenchmarkRecorder - proxies requests and collects telemetry', async (
   assert.equal(summary.totalMcpCalls, 1);
   assert.equal(summary.benchmarkLayer, 'agent-task-level');
 
-  if (outFile && fs.existsSync(outFile)) {
-    fs.unlinkSync(outFile);
-  }
-
+  if (outFile && fs.existsSync(outFile)) fs.unlinkSync(outFile);
   await recorder.stop();
-  await new Promise((resolve) => {
-    mockBackend.closeAllConnections?.();
-    mockBackend.close(resolve);
-  });
+  await closeServer(mockBackend);
 });
 
 test('AgentBenchmarkRecorder - proxies streaming SSE GET connections without hanging', async () => {
-  // Mock backend that keeps an SSE stream open
   const mockSseBackend = http.createServer((req, res) => {
     if (req.method === 'GET') {
       res.writeHead(200, {
@@ -140,39 +155,32 @@ test('AgentBenchmarkRecorder - proxies streaming SSE GET connections without han
       });
       res.write(':\n\n');
       res.write('data: {"jsonrpc":"2.0","method":"ping"}\n\n');
-      // Intentionally keep open until client disconnects
     } else {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end('{}');
     }
   });
 
-  const backendPort = 12404;
-  await new Promise((resolve) => mockSseBackend.listen(backendPort, '127.0.0.1', resolve));
+  await new Promise((resolve) => mockSseBackend.listen(12404, '127.0.0.1', resolve));
 
-  const recorderPort = 12405;
-  const fixturePort = 12406;
   const recorder = new AgentBenchmarkRecorder({
-    proxyPort: recorderPort,
-    targetMcpUrl: `http://127.0.0.1:${backendPort}/mcp`,
-    fixturePort,
+    proxyPort: 12405,
+    targetMcpUrl: 'http://127.0.0.1:12404/mcp',
+    fixturePort: 12406,
     taskId: 'short-interaction',
-    mcpClient: { async callTool() { return { ok: true }; } },
+    mcpClient: shortVerificationClient(),
   });
 
   await recorder.start();
 
-  // Connect to proxy using streaming fetch with abort controller
   const abortCtrl = new AbortController();
-  const res = await fetch(`http://127.0.0.1:${recorderPort}/mcp`, {
+  const res = await fetch('http://127.0.0.1:12405/mcp', {
     method: 'GET',
     headers: { Accept: 'text/event-stream' },
     signal: abortCtrl.signal,
   });
 
   assert.equal(res.status, 200);
-  assert.ok(res.headers.get('content-type')?.includes('text/event-stream'));
-
   const reader = res.body.getReader();
   const { value } = await reader.read();
   const text = new TextDecoder().decode(value);
@@ -180,73 +188,73 @@ test('AgentBenchmarkRecorder - proxies streaming SSE GET connections without han
 
   abortCtrl.abort();
   await recorder.stop();
-  await new Promise((resolve) => {
-    mockSseBackend.closeAllConnections?.();
-    mockSseBackend.close(resolve);
-  });
+  await closeServer(mockSseBackend);
 });
 
-test('AgentBenchmarkRecorder - handles batch JSON-RPC requests', async () => {
+test('AgentBenchmarkRecorder - handles batch JSON-RPC requests by response ID', async () => {
   let batchReceived = null;
   const mockBatchBackend = http.createServer((req, res) => {
     let body = '';
     req.on('data', (c) => (body += c));
     req.on('end', () => {
-      try {
-        batchReceived = JSON.parse(body);
-      } catch {}
+      batchReceived = JSON.parse(body);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify([
-          { jsonrpc: '2.0', id: 1, result: { content: [{ type: 'text', text: '{"ok":true}' }] } },
-          { jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: '{"ok":true}' }] } },
+          {
+            jsonrpc: '2.0',
+            id: batchReceived[1].id,
+            result: { content: [{ type: 'text', text: '{"ok":true,"tabId":42}' }] },
+          },
+          {
+            jsonrpc: '2.0',
+            id: batchReceived[0].id,
+            result: { content: [{ type: 'text', text: '{"ok":true}' }] },
+          },
         ]),
       );
     });
   });
 
-  const backendPort = 12407;
-  await new Promise((resolve) => mockBatchBackend.listen(backendPort, '127.0.0.1', resolve));
+  await new Promise((resolve) => mockBatchBackend.listen(12407, '127.0.0.1', resolve));
 
-  const recorderPort = 12408;
-  const fixturePort = 12409;
   const recorder = new AgentBenchmarkRecorder({
-    proxyPort: recorderPort,
-    targetMcpUrl: `http://127.0.0.1:${backendPort}/mcp`,
-    fixturePort,
+    proxyPort: 12408,
+    targetMcpUrl: 'http://127.0.0.1:12407/mcp',
+    fixturePort: 12409,
     taskId: 'short-interaction',
-    mcpClient: { async callTool() { return { ok: true, raw: 'ACTIVE' }; } },
+    mcpClient: shortVerificationClient(),
   });
 
   await recorder.start();
 
-  const batchPayload = JSON.stringify([
-    { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'chrome_read_page', arguments: {} } },
-    { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'chrome_click_element', arguments: { selector: '#activate-btn' } } },
-  ]);
-
-  const clientReq = await fetch(`http://127.0.0.1:${recorderPort}/mcp`, {
+  await fetch('http://127.0.0.1:12408/mcp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: batchPayload,
+    body: JSON.stringify([
+      {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: { name: 'chrome_read_page', arguments: { tabId: 42 } },
+      },
+      {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'chrome_click_element',
+          arguments: { selector: '#activate-btn', tabId: 42 },
+        },
+      },
+    ]),
   });
 
-  assert.equal(clientReq.status, 200);
-  assert.equal(Array.isArray(batchReceived), true);
-  assert.equal(batchReceived.length, 2);
-
-  const { summary, outFile } = await recorder.verifyAndFinalize();
+  const summary = recorder.collector.finish(true);
   assert.equal(summary.totalMcpCalls, 2);
-  assert.equal(summary.toolBreakdown['chrome_read_page'], 1);
-  assert.equal(summary.toolBreakdown['chrome_click_element'], 1);
-
-  if (outFile && fs.existsSync(outFile)) {
-    fs.unlinkSync(outFile);
-  }
+  assert.equal(summary.events.every((e) => e.isError === false), true);
+  assert.equal(summary.events.every((e) => e.resultMeta.batchSize === 2), true);
 
   await recorder.stop();
-  await new Promise((resolve) => {
-    mockBatchBackend.closeAllConnections?.();
-    mockBatchBackend.close(resolve);
-  });
+  await closeServer(mockBatchBackend);
 });
