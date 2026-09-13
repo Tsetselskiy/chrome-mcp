@@ -33,7 +33,12 @@ function decodeExtractionResult(response) {
   }
 
   if (!value || typeof value !== 'object') return null;
-  const token = typeof value.token === 'string' ? value.token.trim() : '';
+  const token =
+    typeof value.token === 'string'
+      ? value.token.trim()
+      : typeof value.code === 'string'
+        ? value.code.trim()
+        : '';
   const shipmentId = typeof value.shipmentId === 'string' ? value.shipmentId.trim() : '';
   return token && shipmentId ? { token, shipmentId } : null;
 }
@@ -67,10 +72,10 @@ export async function runMultiHopScenario(client, collector, options = {}) {
     }
 
     const extractJs = await client.callTool('chrome_javascript', {
-      code: `({
-        token: document.getElementById('transfer-token')?.textContent?.trim() || '',
+      code: `return {
+        code: document.getElementById('transfer-token')?.textContent?.trim() || '',
         shipmentId: document.getElementById('shipment-id')?.textContent?.trim() || ''
-      })`,
+      };`,
       tabId,
     });
 
