@@ -33,7 +33,9 @@ async function inspectExactDomState(client, tabId, code) {
     return { ok: false, reason: 'Cannot verify task: final tabId was not captured' };
   }
 
-  const res = await client.callTool('chrome_javascript', { tabId, code });
+  const trimmed = code.trim();
+  const wrappedCode = trimmed.startsWith('return ') ? trimmed : `return ${trimmed};`;
+  const res = await client.callTool('chrome_javascript', { tabId, code: wrappedCode });
   if (!res.ok) {
     return { ok: false, reason: `DOM verification failed: ${res.error}` };
   }
@@ -172,6 +174,7 @@ export const AGENT_BENCHMARK_TASKS = [
           return {
             pathname: location.pathname,
             shipmentInput: document.getElementById('input-shipment-id')?.value?.trim() || '',
+            enteredCode: document.getElementById('input-token')?.value?.trim() || '',
             tokenInput: document.getElementById('input-token')?.value?.trim() || '',
             successVisible: Boolean(success && getComputedStyle(success).display !== 'none'),
             errorVisible: Boolean(error && getComputedStyle(error).display !== 'none'),
@@ -187,7 +190,7 @@ export const AGENT_BENCHMARK_TASKS = [
       const success =
         s.pathname.endsWith('/multihop/site-b.html') &&
         s.shipmentInput === 'SHP-88301' &&
-        s.tokenInput === 'BENCHMARK-CODE-9204' &&
+        (s.enteredCode === 'BENCHMARK-CODE-9204' || s.tokenInput === 'BENCHMARK-CODE-9204') &&
         s.successVisible === true &&
         s.errorVisible === false &&
         s.confirmedShipment === 'SHP-88301' &&
