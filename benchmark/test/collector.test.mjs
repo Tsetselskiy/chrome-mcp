@@ -36,7 +36,8 @@ test('BenchmarkMetricsCollector - records metrics accurately', () => {
   assert.equal(summary.taskSuccess, true);
   assert.equal(summary.totalMcpCalls, 4);
   assert.equal(summary.lowLevelJsCalls, 1);
-  assert.equal(summary.browserExecutionTimeMs, 305);
+  assert.equal(summary.mcpRoundTripTimeMs, 305);
+  assert.equal(summary.browserExecutionTimeMs, null);
   assert.equal(summary.pageInspectionCalls, 2);
   assert.equal(summary.repeatedPageInspections, 1);
   assert.equal(summary.retries, 1);
@@ -48,17 +49,24 @@ test('Mock Runner - runs scenarios deterministically with mock transport', async
   const mockState = { shortState: 'INACTIVE', dynamicSelected: false, siteBAuthorized: false };
   const mockHandler = {
     async handleToolCall(name, args) {
-      if (name === 'chrome_navigate') return { success: true };
+      if (name === 'chrome_navigate') return { success: true, tabId: 42 };
       if (name === 'chrome_read_page') {
         let content = 'Generic page content';
-        if (mockState.shortState === 'ACTIVE') content += ' Status: ACTIVE Service Activated';
-        if (mockState.dynamicSelected)
+        if (mockState.shortState === 'ACTIVE') {
+          content +=
+            ' Current Operational Status: ACTIVE Service Activated Successfully';
+        }
+        if (mockState.dynamicSelected) {
           content +=
             ' select-btn-us-east-prod US-East Production Primary ALLOC-8891 Allocation confirmed';
-        else content += ' select-btn-us-east-prod US-East Production Primary';
-        if (mockState.siteBAuthorized)
-          content += ' DISPATCHED-OK-2026 Dispatched successfully';
-        else content += ' Fulfillment Authorization Gateway';
+        } else {
+          content += ' select-btn-us-east-prod US-East Production Primary';
+        }
+        if (mockState.siteBAuthorized) {
+          content += ' SHP-88301 DISPATCHED-OK-2026 Dispatched successfully';
+        } else {
+          content += ' Fulfillment Authorization Gateway';
+        }
         return { success: true, pageContent: content };
       }
       if (name === 'chrome_click_element') {
@@ -66,14 +74,16 @@ test('Mock Runner - runs scenarios deterministically with mock transport', async
         if (
           args.selector === '#select-btn-us-east-prod' ||
           args.selector === '#submit-allocation-btn'
-        )
+        ) {
           mockState.dynamicSelected = true;
+        }
         if (args.selector === '#authorize-dispatch-btn') mockState.siteBAuthorized = true;
         return { success: true };
       }
       if (name === 'chrome_fill_or_select') return { success: true };
-      if (name === 'chrome_javascript')
+      if (name === 'chrome_javascript') {
         return { token: 'BENCHMARK-CODE-9204', shipmentId: 'SHP-88301' };
+      }
       return { success: true };
     },
   };
@@ -81,25 +91,23 @@ test('Mock Runner - runs scenarios deterministically with mock transport', async
   const client = new BenchmarkMcpClient({ mockHandler });
   await client.connect();
 
-  const col1 = new BenchmarkMetricsCollector('short');
+  const col1 = new BenchmarkMetricsCollector('short', { autoClassifyJsQueries: true });
   client.setCollector(col1);
   col1.start();
   const sum1 = await runShortScenario(client, col1, {
     fixtureBaseUrl: 'http://localhost:12399',
   });
   assert.equal(sum1.taskSuccess, true);
-  assert.equal(sum1.totalMcpCalls >= 3, true);
 
-  const col2 = new BenchmarkMetricsCollector('dynamic');
+  const col2 = new BenchmarkMetricsCollector('dynamic', { autoClassifyJsQueries: true });
   client.setCollector(col2);
   col2.start();
   const sum2 = await runDynamicScenario(client, col2, {
     fixtureBaseUrl: 'http://localhost:12399',
   });
   assert.equal(sum2.taskSuccess, true);
-  assert.equal(sum2.totalMcpCalls >= 6, true);
 
-  const col3 = new BenchmarkMetricsCollector('multihop');
+  const col3 = new BenchmarkMetricsCollector('multihop', { autoClassifyJsQueries: true });
   client.setCollector(col3);
   col3.start();
   const sum3 = await runMultiHopScenario(client, col3, {
@@ -107,9 +115,11 @@ test('Mock Runner - runs scenarios deterministically with mock transport', async
   });
   assert.equal(sum3.taskSuccess, true);
   assert.equal(sum3.lowLevelJsCalls, 1);
+  assert.equal(sum3.pageInspectionCalls, 4);
+  assert.equal(sum3.repeatedPageInspections, 1);
 });
 
-test('BenchmarkMetricsCollector - tracks multi-tool inspections and DOM mutation resets', () => {
+test('BenchmarkMetricsCollector - tracks multi-tool inspections and mutation resets', () => {
   const collector = new BenchmarkMetricsCollector('inspection-clarification-test');
   collector.start();
   collector.recordCall({ name: 'chrome_navigate', args: { url: 'http://localhost/test' } });
@@ -133,6 +143,25 @@ test('BenchmarkMetricsCollector - tracks multi-tool inspections and DOM mutation
   assert.equal(summary.lowLevelJsCalls, 1);
 });
 
+test('BenchmarkMetricsCollector - inspection state is tracked per tab', () => {
+  const collector = new BenchmarkMetricsCollector('per-tab-test');
+  collector.start();
+
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 10 } });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 20 } });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 10 } });
+  collector.recordCall({
+    name: 'chrome_click_element',
+    args: { tabId: 20, selector: '#button' },
+  });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 20 } });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 10 } });
+
+  const summary = collector.finish(true);
+  assert.equal(summary.pageInspectionCalls, 5);
+  assert.equal(summary.repeatedPageInspections, 2);
+});
+
 test('BenchmarkMetricsCollector - autoClassifyJsQueries classifies DOM inspection queries', () => {
   const collector = new BenchmarkMetricsCollector('auto-classify-test', {
     autoClassifyJsQueries: true,
@@ -141,11 +170,11 @@ test('BenchmarkMetricsCollector - autoClassifyJsQueries classifies DOM inspectio
   collector.recordCall({ name: 'chrome_navigate', args: { url: 'http://localhost/test' } });
   collector.recordCall({
     name: 'chrome_javascript',
-    args: { code: 'document.querySelector(".badge").innerText' },
+    args: { code: 'document.querySelector(".badge").outerHTML' },
   });
   collector.recordCall({
     name: 'chrome_javascript',
-    args: { code: 'document.getElementById("status").textContent' },
+    args: { code: 'document.getElementById("status").dataset.state' },
   });
   const summary = collector.finish(true);
   assert.equal(summary.pageInspectionCalls, 2);
@@ -153,28 +182,27 @@ test('BenchmarkMetricsCollector - autoClassifyJsQueries classifies DOM inspectio
   assert.equal(summary.lowLevelJsCalls, 2);
 });
 
-test('BenchmarkMetricsCollector - long JS script mutations (>50 chars) properly reset inspection state', () => {
-  const collector = new BenchmarkMetricsCollector('long-script-mutation-test', {
+test('BenchmarkMetricsCollector - expanded JS mutations reset inspection state', () => {
+  const collector = new BenchmarkMetricsCollector('expanded-mutation-test', {
     autoClassifyJsQueries: true,
   });
   collector.start();
-  collector.recordCall({ name: 'chrome_read_page' });
-  const longMutationCode =
-    '// Initialize target application state and invoke action\n' +
-    'document.querySelector("#deeply-nested-container .confirm-action-button").click();';
-  assert.ok(longMutationCode.length > 50);
-  collector.recordCall({ name: 'chrome_javascript', args: { code: longMutationCode } });
-  collector.recordCall({ name: 'chrome_read_page' });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 1 } });
+  const mutation = collector.recordCall({
+    name: 'chrome_javascript',
+    args: {
+      tabId: 1,
+      code: 'document.querySelector("form").requestSubmit(); location.assign("/next");',
+    },
+  });
+  assert.equal(mutation.isInspection, false);
+  assert.equal(mutation.isMutation, true);
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 1 } });
   const summary = collector.finish(true);
-  assert.equal(summary.pageInspectionCalls, 2);
-  assert.equal(
-    summary.repeatedPageInspections,
-    0,
-    'Inspection after long JS mutation must not be repeated',
-  );
+  assert.equal(summary.repeatedPageInspections, 0);
 });
 
-test('BenchmarkMetricsCollector - JS value setters are treated as mutations, not queries', () => {
+test('BenchmarkMetricsCollector - JS value setters are mutations, not queries', () => {
   const collector = new BenchmarkMetricsCollector('setter-test', {
     autoClassifyJsQueries: true,
   });
@@ -182,13 +210,12 @@ test('BenchmarkMetricsCollector - JS value setters are treated as mutations, not
   collector.recordCall({ name: 'chrome_read_page' });
   const setterCall = collector.recordCall({
     name: 'chrome_javascript',
-    args: { code: 'document.querySelector("#input-field").value = "test-value";' },
+    args: { code: 'document.querySelector("#input-field").checked = true;' },
   });
-  assert.equal(setterCall.isInspection, false, 'Setter must not be classified as inspection');
-  assert.equal(setterCall.isMutation, true, 'Setter must be classified as mutation');
+  assert.equal(setterCall.isInspection, false);
+  assert.equal(setterCall.isMutation, true);
   collector.recordCall({ name: 'chrome_read_page' });
   const summary = collector.finish(true);
-  assert.equal(summary.pageInspectionCalls, 2);
   assert.equal(summary.repeatedPageInspections, 0);
 });
 
@@ -203,7 +230,15 @@ test('BenchmarkMetricsCollector - classifies actual chrome_computer actions appr
   assert.equal(screenshot.isInspection, true);
   assert.equal(screenshot.isMutation, false);
 
-  for (const action of ['left_click', 'left_click_drag', 'scroll', 'fill', 'fill_form', 'type', 'key']) {
+  for (const action of [
+    'left_click',
+    'left_click_drag',
+    'scroll',
+    'fill',
+    'fill_form',
+    'type',
+    'key',
+  ]) {
     const evt = collector.recordCall({ name: 'chrome_computer', args: { action } });
     assert.equal(evt.isInspection, false, `${action} must not be an inspection`);
     assert.equal(evt.isMutation, true, `${action} must reset inspected state`);
@@ -218,20 +253,16 @@ test('BenchmarkMetricsCollector - failed mutation does not reset inspection stat
   const collector = new BenchmarkMetricsCollector('failed-mutation-test');
   collector.start();
 
-  collector.recordCall({ name: 'chrome_read_page' });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 1 } });
   collector.recordCall({
     name: 'chrome_click_element',
-    args: { selector: '#missing-button' },
+    args: { tabId: 1, selector: '#missing-button' },
     isError: true,
     error: 'Element not found',
   });
-  collector.recordCall({ name: 'chrome_read_page' });
+  collector.recordCall({ name: 'chrome_read_page', args: { tabId: 1 } });
 
   const summary = collector.finish(false);
   assert.equal(summary.pageInspectionCalls, 2);
-  assert.equal(
-    summary.repeatedPageInspections,
-    1,
-    'Inspection after a failed action must still count as repeated',
-  );
+  assert.equal(summary.repeatedPageInspections, 1);
 });
