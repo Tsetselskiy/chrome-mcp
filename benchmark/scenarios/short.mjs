@@ -48,7 +48,9 @@ export async function runShortScenario(client, collector, options = {}) {
     }
 
     const inspectText = inspect2.raw || (inspect2.data ? JSON.stringify(inspect2.data) : '');
-    const hasExactActiveStatus = /Current Operational Status:\s*ACTIVE\b/.test(inspectText);
+    const hasExactActiveStatus =
+      /Current Operational Status:[\s\S]*?\bACTIVE\b/.test(inspectText) &&
+      !inspectText.includes('INACTIVE');
     const hasSuccessMessage = inspectText.includes('Service Activated Successfully');
 
     if (!hasExactActiveStatus || !hasSuccessMessage) {
