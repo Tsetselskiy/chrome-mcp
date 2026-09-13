@@ -40,6 +40,28 @@ export const DOM_MUTATION_TOOLS = [
   'record_replay_flow_run',
 ];
 
+const COMPUTER_INSPECTION_ACTIONS = ['screenshot', 'zoom'];
+
+// These actions can change the page, viewport, focus, or rendered state enough that
+// the next inspection should be treated as observing a new state rather than a
+// repeated inspection of the previous one.
+const COMPUTER_STATE_CHANGE_ACTIONS = [
+  'left_click',
+  'right_click',
+  'double_click',
+  'triple_click',
+  'left_click_drag',
+  'scroll',
+  'scroll_to',
+  'type',
+  'key',
+  'fill',
+  'fill_form',
+  'hover',
+  'wait',
+  'resize_page',
+];
+
 export function isJsMutation(code) {
   if (typeof code !== 'string') return false;
   return /(?:\.click\s*\(|\.submit\s*\(|\.focus\s*\(|\.blur\s*\(|\.remove\s*\(|\.setValue|\.dispatchEvent\s*\(|\.setAttribute\s*\(|\.appendChild\s*\(|\.value\s*=|\.textContent\s*=|\.innerText\s*=|\.innerHTML\s*=|location\.href\s*=)/i.test(
@@ -93,9 +115,13 @@ export class BenchmarkMetricsCollector {
       isInspection = event.isInspection;
     } else if (INSPECTION_TOOL_NAMES.includes(name)) {
       isInspection = true;
-    } else if (name === 'chrome_computer' && ['screenshot', 'inquire'].includes(args?.action)) {
+    } else if (name === 'chrome_computer' && COMPUTER_INSPECTION_ACTIONS.includes(args?.action)) {
       isInspection = true;
-    } else if (this.autoClassifyJsQueries && name === 'chrome_javascript' && isJsInspectionQuery(args?.code)) {
+    } else if (
+      this.autoClassifyJsQueries &&
+      name === 'chrome_javascript' &&
+      isJsInspectionQuery(args?.code)
+    ) {
       isInspection = true;
     }
 
@@ -108,20 +134,7 @@ export class BenchmarkMetricsCollector {
       isMutation = true;
     } else if (
       name === 'chrome_computer' &&
-      [
-        'click',
-        'left_click',
-        'right_click',
-        'middle_click',
-        'double_click',
-        'triple_click',
-        'mouse_down',
-        'type',
-        'key_down',
-        'key',
-        'hotkey',
-        'drag_and_drop',
-      ].includes(args?.action)
+      COMPUTER_STATE_CHANGE_ACTIONS.includes(args?.action)
     ) {
       isMutation = true;
     }
@@ -170,13 +183,14 @@ export class BenchmarkMetricsCollector {
   }
 
   getSummary() {
-    const totalDurationMs = this.endTime && this.startTime
-      ? Math.round((this.endTime - this.startTime) * 100) / 100
-      : 0;
+    const totalDurationMs =
+      this.endTime && this.startTime
+        ? Math.round((this.endTime - this.startTime) * 100) / 100
+        : 0;
 
     const toolEvents = this.events.filter((e) => !e.isRetryEvent);
 
-    let totalMcpCalls = toolEvents.length;
+    const totalMcpCalls = toolEvents.length;
     let lowLevelJsCalls = 0;
     let browserExecutionTimeMs = 0;
     let pageInspectionCalls = 0;
@@ -200,7 +214,10 @@ export class BenchmarkMetricsCollector {
           repeatedPageInspections++;
         }
         hasInspectedCurrentState = true;
-      } else if (evt.isMutation) {
+      } else if (evt.isMutation && !evt.isError) {
+        // A failed action did not establish a new observable page state. Keep the
+        // previous inspection state so a subsequent inspection is still counted
+        // as repeated.
         hasInspectedCurrentState = false;
       }
     }
@@ -229,15 +246,18 @@ export class BenchmarkMetricsCollector {
     if (args.selector) summary.selector = args.selector;
     if (args.ref) summary.ref = args.ref;
     if (args.tabId) summary.tabId = args.tabId;
+    if (args.action) summary.action = args.action;
     if (args.value !== undefined) {
-      summary.value = typeof args.value === 'string' && args.value.length > 30
-        ? `${args.value.slice(0, 27)}...`
-        : args.value;
+      summary.value =
+        typeof args.value === 'string' && args.value.length > 30
+          ? `${args.value.slice(0, 27)}...`
+          : args.value;
     }
     if (args.code) {
-      summary.code = typeof args.code === 'string' && args.code.length > 50
-        ? `${args.code.slice(0, 47)}...`
-        : args.code;
+      summary.code =
+        typeof args.code === 'string' && args.code.length > 50
+          ? `${args.code.slice(0, 47)}...`
+          : args.code;
     }
     if (args.filter) summary.filter = args.filter;
     return summary;
