@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benchmark Fixture - Short Interaction</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+        color: #1e293b;
+      }
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      nav a {
+        margin-left: 16px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      nav a:hover {
+        color: #0284c7;
+      }
+      main {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .btn {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .btn:hover {
+        background: #1d4ed8;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        font-weight: 600;
+        font-size: 14px;
+        margin-top: 16px;
+      }
+      .status-inactive {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .status-active {
+        background: #dcfce7;
+        color: #166534;
+      }
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="font-weight: 700; font-size: 18px">CloudOps Console</div>
+      <nav>
+        <a href="#overview">Overview</a>
+        <a href="#services">Services</a>
+        <a href="#logs">Logs</a>
+        <a href="#settings">Settings</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Primary Gateway Service</h2>
+        <p id="desc"
+          >Manage and toggle primary service activation status across regional clusters.</p
+        >
+
+        <div style="margin: 24px 0">
+          <button id="activate-btn" class="btn" onclick="activateService()"
+            >Activate Service</button
+          >
+        </div>
+
+        <div id="status-container">
+          Current Operational Status:
+          <span id="status-badge" class="status-badge status-inactive">INACTIVE</span>
+        </div>
+
+        <div id="status-details" style="margin-top: 16px; color: #64748b; font-size: 14px">
+          Region: us-east-1 | Cluster ID: cls-9021 | Health: Standby
+        </div>
+
+        <div
+          id="system-message"
+          style="display: none; margin-top: 12px; color: #166534; font-weight: 500"
+        >
+          Service Activated Successfully
+        </div>
+      </div>
+    </main>
+
+    <footer> CloudOps Management Platform &bull; Automated Baseline Benchmark Fixture </footer>
+
+    <script>
+      function activateService() {
+        const badge = document.getElementById('status-badge');
+        badge.textContent = 'ACTIVE';
+        badge.className = 'status-badge status-active';
+        const btn = document.getElementById('activate-btn');
+        btn.textContent = 'Service Activated';
+        btn.disabled = true;
+        document.getElementById('status-details').textContent =
+          'Region: us-east-1 | Cluster ID: cls-9021 | Health: Optimal (Running)';
+        document.getElementById('system-message').style.display = 'block';
+      }
+    </script>
+  </body>
+</html>
