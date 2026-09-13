@@ -1,153 +1,100 @@
 # Chrome MCP Benchmark Suite
 
-This directory contains the performance baseline and benchmark harness for Chrome MCP.
+This directory contains the benchmark harness for establishing the Chrome MCP performance baseline before interaction optimizations.
 
-The suite implements two distinct benchmark layers to evaluate performance and support future optimizations:
+The suite has two distinct layers:
 
-1. **Low-Level Deterministic Benchmark** (Regression & Latency)
-2. **Agent / Task-Level Benchmark** (LLM ↔ MCP Round-Trip Efficiency)
+1. **Deterministic low-level benchmark** — fixed tool-call sequences for regression and transport/tool latency checks.
+2. **Agent / task-level benchmark** — fixed task goals where the LLM chooses its own MCP calls, used to measure LLM ↔ MCP round-trip efficiency.
 
----
+## Metrics
 
-## 1. Benchmark Layers
+- **`totalMcpCalls`** — agent/scenario `tools/call` invocations.
+- **`lowLevelJsCalls`** — arbitrary JavaScript execution tools.
+- **`mcpRoundTripTimeMs`** — client-observed MCP round-trip latency. It includes HTTP transport, serialization, native messaging, server execution, and browser work. It is **not** isolated browser-handler time.
+- **`browserExecutionTimeMs`** — intentionally `null` because the current transport does not expose isolated browser-handler timing.
+- **`pageInspectionCalls`** — page/content inspection calls, including recognized DOM-reading JavaScript.
+- **`repeatedPageInspections`** — inspections of the same tab/page scope without a successful intervening state-changing action. Inspection state is tracked per tab; failed actions do not reset it.
+- **`retries`** — in agent-proxy runs, the same tool + equivalent arguments invoked in a later request after that exact call failed. Repeated successful inspections/polling are tracked separately unless explicitly marked by a deterministic scenario.
+- **`taskSuccess`** — strict deterministic verification of the required final DOM state.
 
-| Layer                            | Unit of Comparison           | Execution Model                                                                               | Primary Purpose                                                                                                                                                                                          |
-| :------------------------------- | :--------------------------- | :-------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Deterministic Benchmark**      | **Fixed Tool Call Sequence** | Programmatic scenarios execute predefined tool calls (`short`, `dynamic`, `multihop`).        | Measures MCP/tool execution latency, tests tool contract regressions, and validates collector correctness.                                                                                               |
-| **Agent / Task-Level Benchmark** | **Task Goal & Prompt**       | The LLM agent receives only the task goal and autonomously decides which MCP tools to invoke. | Measures **round-trip efficiency**: whether future improvements (Issue #2 Semantic Action Retrieval) reduce the number of LLM ↔ MCP round trips and low-level DOM queries required to accomplish a task. |
+## Run deterministic benchmark
 
----
-
-## 2. Benchmark Metrics
-
-Both benchmark layers record standardized interaction metrics via `benchmark/collector.mjs`:
-
-- **Total MCP Calls (`totalMcpCalls`):** Number of tool invocations performed.
-- **Low-Level JavaScript Calls (`lowLevelJsCalls`):** Calls executing arbitrary JS (`chrome_javascript`, `chrome_inject_script`).
-- **Browser Execution Time (`browserExecutionTimeMs`):** Cumulative time spent executing tool actions in the browser.
-- **Repeated Page Inspections (`repeatedPageInspections`):** Inspection calls performed when the page state has already been inspected without a successful intervening state-changing action. Failed actions do not reset the inspected-state marker.
-- **Retries (`retries`):** In agent-proxy runs, a retry is the same tool + arguments invoked again after that exact call previously failed. Deterministic scenarios and manually analyzed traces can also mark explicit polling retries. Repeated successful inspections are tracked separately and are not automatically counted as retries.
-- **Task Success / Failure (`taskSuccess`):** Deterministic verification that the task goal was achieved in the DOM.
-
----
-
-## 3. How to Run the Benchmarks
-
-### 3.1. Low-Level Deterministic Benchmark
-
-#### Live Mode (Canonical Baseline)
-
-Prerequisites: Google Chrome running with the Chrome MCP Extension loaded and the native server listening at `http://127.0.0.1:12307`.
+Prerequisites: live Chrome MCP native server/extension on `http://127.0.0.1:12307`.
 
 ```bash
-# Run deterministic suite against real Chrome MCP:
 pnpm run benchmark
-# or:
-node benchmark/runner.mjs
 ```
 
-This runs the 3 canonical scenarios (`short-navigation-interaction`, `dynamic-multistep-interaction`, `long-multihop-cross-site-workflow`), outputs the performance summary table, and writes the canonical baseline to:
-`benchmark/results/baseline.json`.
+This writes `benchmark/results/baseline.json` for a live run.
 
-#### Mock Mode (Infrastructure / CI Testing)
+The artifact includes source SHA, Node/OS/hardware metadata, package versions, optional Chrome version supplied through `BENCHMARK_CHROME_VERSION`, and an explicit warning that latency is a single-run MCP round-trip measurement.
 
-To verify benchmark harness functionality in environments without a live Chrome instance:
+For a valid baseline run, set the warm-up state explicitly, for example:
+
+```bash
+BENCHMARK_WARMUP_STATE="fresh Chrome MCP session; one warm-up navigation completed" \
+BENCHMARK_CHROME_VERSION="<actual Chrome version>" \
+pnpm run benchmark
+```
+
+## Run mock validation
 
 ```bash
 pnpm run benchmark:mock
-# or:
-node benchmark/mock-runner.mjs
 ```
 
-Mock results are written to `benchmark/results/mock-baseline.json`.
+This writes `benchmark/results/mock-baseline.json`. Mock measurements validate the harness only and must never be interpreted as live performance data.
 
-> **Note:** Mock results validate benchmark infrastructure only and are never saved as the canonical baseline.
-
----
-
-### 3.2. Agent / Task-Level Benchmark
-
-The agent benchmark evaluates how an LLM agent solves user tasks without a predetermined tool script.
-
-#### Option A: Interactive Session Capture via Proxy
-
-Run the agent benchmark recorder:
+## Run agent/task-level capture
 
 ```bash
-# Launch recorder for a specific task and record the model configuration:
 node benchmark/agent-recorder.mjs \
   --task short-interaction \
-  --model "gemini-3.8-flash" \
+  --model "Gemini 3.8 Flash High" \
   --reasoning-mode high
-
-# Available task IDs:
-#   short-interaction
-#   dynamic-multistep-interaction
-#   longer-multipage-workflow
 ```
 
-The recorder:
+Available task IDs:
 
-1. Starts the local fixture server at `http://localhost:12399`.
-2. Starts a transparent MCP proxy at `http://127.0.0.1:12308/mcp` forwarding to live Chrome MCP.
-3. Prints the exact prompt for the task.
-4. Point your agent (Cursor, Claude Desktop, Antigravity, Claude Code, etc.) to the proxy URL and send the prompt.
-5. Press **[ENTER]** in the terminal once the agent finishes. The recorder performs automated DOM state verification and writes the structured run trace to `benchmark/results/agent-<task>-<timestamp>.json`.
+- `short-interaction`
+- `dynamic-multistep-interaction`
+- `longer-multipage-workflow`
 
-`--model` and `--reasoning-mode` are labels stored in the result metadata so before/after runs can be compared with the same agent configuration. They do not configure the external agent itself.
+The recorder starts the fixtures on `:12399` and an MCP recording proxy on `:12308`. Point the agent's Chrome MCP configuration at `http://127.0.0.1:12308/mcp`, run the exact printed prompt in a fresh session, then press Enter when the agent is finished. Verification runs separately and is not counted as agent MCP traffic.
 
-#### Option B: Replay / Trace Analysis
+`--model` and `--reasoning-mode` are metadata labels only; they do not configure the external model.
 
-If you captured an agent session's MCP logs manually:
+## Manual trace analysis
 
 ```bash
 node benchmark/analyze-trace.mjs path/to/trace.json
 ```
 
-For full details on stable variables, prompts, and evaluation criteria, see [`agent-protocol.md`](./agent-protocol.md).
+Manual traces must contain explicit task-success evidence (`taskSuccess` or `success`). Missing success information is treated as **FAIL**, never PASS.
 
----
-
-## 4. Running Benchmark Unit Tests
-
-To run the unit tests for the metrics collector, task definitions, and recorder:
+## Tests
 
 ```bash
 pnpm run test:benchmark
-# or:
+# or
 node --test benchmark/test/*.test.mjs
 ```
 
----
+## Baseline status in PR #4
 
-## 5. Result Storage & Artifact Identification
+The original live and mock JSON artifacts were removed after review found that the original deterministic runner did not classify DOM-reading JavaScript as an inspection and used a misleading browser-time label. They must be regenerated with the corrected harness before PR #4 is merged.
 
-Results are stored in `benchmark/results/`:
+PR #4 should not be merged until all of the following exist and are reviewed:
 
-- **`baseline.json`:** The canonical baseline from the live Chrome MCP run. Contains metadata:
-  ```json
-  "benchmarkLayer": "deterministic-low-level",
-  "canonicalBaseline": true,
-  "executionMode": "live-mcp-browser",
-  "isLiveRun": true
-  ```
-- **`mock-baseline.json`:** Results from mock test runs (`isLiveRun: false`).
-- **`agent-<taskId>-<timestamp>.json`:** Results and complete call traces from agent task runs (`benchmarkLayer: "agent-task-level"`).
+- a fresh `benchmark/results/baseline.json` from the corrected live deterministic runner;
+- a fresh `benchmark/results/mock-baseline.json`;
+- real agent/task-level BEFORE traces for all three task IDs using the same recorded model/reasoning configuration that will later be used for the Issue #2 AFTER comparison.
 
----
+## Future Issue #2 A/B comparison
 
-## 6. How to Perform Future Before/After Comparisons (Issue #2)
+Use the same task prompts, fixture state, model snapshot/configuration, reasoning mode, browser/MCP configuration, and fresh-session procedure for BEFORE and AFTER runs.
 
-When Issue #2 (Semantic Action Retrieval) is developed:
+The main decision metrics are task success, total MCP calls, low-level JS calls, inspections, repeated inspections, and retries. `mcpRoundTripTimeMs` is secondary and should only be compared when the environment is materially the same.
 
-1. **Deterministic Regression Check:**
-   Run `pnpm run benchmark` to ensure raw tool latency and existing tool behaviors have not regressed. Compare against `benchmark/results/baseline.json`.
-
-2. **Agent Round-Trip Comparison:**
-   Run the identical task prompts from [`agent-protocol.md`](./agent-protocol.md) using the same model configuration:
-   - **Before (Baseline):** The agent inspects large accessibility trees (`chrome_read_page`), struggles with dynamic elements, or uses fallback JS queries (`chrome_javascript`).
-   - **After (Issue #2):** With Semantic Action Retrieval, verify that:
-     - `totalMcpCalls` decreases.
-     - `pageInspectionCalls` and `repeatedPageInspections` decrease.
-     - `lowLevelJsCalls` approaches zero.
-     - `browserExecutionTimeMs` and LLM round-trip tokens decrease.
+See [`agent-protocol.md`](./agent-protocol.md) for the exact task prompts and reproducibility protocol.
