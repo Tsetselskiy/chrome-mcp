@@ -2,14 +2,8 @@
 /**
  * Agent Benchmark Trace Analyzer
  *
- * Analyzes recorded MCP tool call traces (from agent runs, logs, or manual session dumps)
- * and computes standardized benchmark metrics:
- * - total MCP calls
- * - low-level JavaScript calls
- * - browser execution time
- * - repeated page inspections
- * - retries
- * - success / failure
+ * Analyzes recorded MCP tool call traces and computes standardized benchmark metrics.
+ * Missing task-success evidence is treated as failure, never as an implicit PASS.
  */
 
 import fs from 'node:fs';
@@ -18,7 +12,6 @@ import { fileURLToPath } from 'node:url';
 import { BenchmarkMetricsCollector } from './collector.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export function analyzeTrace(traceData, options = {}) {
   const scenarioName = options.scenarioName || traceData.task || traceData.scenario || 'agent-task';
@@ -48,31 +41,41 @@ export function analyzeTrace(traceData, options = {}) {
       retried: Boolean(call.retried),
       isInspection: call.isInspection,
       isMutation: call.isMutation,
+      scopeKey: call.scopeKey,
     });
   }
 
-  const success = typeof options.success === 'boolean'
-    ? options.success
-    : typeof traceData.taskSuccess === 'boolean'
-      ? traceData.taskSuccess
-      : typeof traceData.success === 'boolean'
-        ? traceData.success
-        : true;
+  const hasExplicitSuccess =
+    typeof options.success === 'boolean' ||
+    typeof traceData.taskSuccess === 'boolean' ||
+    typeof traceData.success === 'boolean';
 
-  const failureReason = options.failureReason || traceData.failureReason || null;
+  const success =
+    typeof options.success === 'boolean'
+      ? options.success
+      : typeof traceData.taskSuccess === 'boolean'
+        ? traceData.taskSuccess
+        : typeof traceData.success === 'boolean'
+          ? traceData.success
+          : false;
+
+  const failureReason =
+    options.failureReason ||
+    traceData.failureReason ||
+    (!hasExplicitSuccess ? 'Trace contains no explicit task success verification' : null);
+
   const summary = collector.finish(success, failureReason);
 
   summary.benchmarkLayer = 'agent-task-level';
   summary.agentMetadata = {
     model: options.model || traceData.model || 'unspecified',
-    reasoningMode: options.reasoningMode || traceData.reasoningMode || 'standard',
+    reasoningMode: options.reasoningMode || traceData.reasoningMode || 'unspecified',
     ...traceData.agentMetadata,
   };
 
   return summary;
 }
 
-// Allow CLI execution: node benchmark/analyze-trace.mjs <trace-file.json>
 if (process.argv[1] === __filename) {
   const file = process.argv[2];
   if (!file) {
@@ -94,9 +97,12 @@ if (process.argv[1] === __filename) {
   console.log('='.repeat(70));
   console.log(` Task / Scenario:      ${summary.scenario}`);
   console.log(` Status:               ${summary.taskSuccess ? 'PASS' : 'FAIL'}`);
+  if (!summary.taskSuccess && summary.failureReason) {
+    console.log(` Failure Reason:       ${summary.failureReason}`);
+  }
   console.log(` Total MCP Calls:      ${summary.totalMcpCalls}`);
   console.log(` Low-Level JS Calls:   ${summary.lowLevelJsCalls}`);
-  console.log(` Browser Exec Time:    ${summary.browserExecutionTimeMs.toFixed(1)} ms`);
+  console.log(` MCP Round-Trip Time:  ${summary.mcpRoundTripTimeMs.toFixed(1)} ms`);
   console.log(` Page Inspections:     ${summary.pageInspectionCalls}`);
   console.log(` Repeated Inspections: ${summary.repeatedPageInspections}`);
   console.log(` Retries:              ${summary.retries}`);
