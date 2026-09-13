@@ -25,8 +25,8 @@ Both benchmark layers record standardized interaction metrics via `benchmark/col
 - **Total MCP Calls (`totalMcpCalls`):** Number of tool invocations performed.
 - **Low-Level JavaScript Calls (`lowLevelJsCalls`):** Calls executing arbitrary JS (`chrome_javascript`, `chrome_inject_script`).
 - **Browser Execution Time (`browserExecutionTimeMs`):** Cumulative time spent executing tool actions in the browser.
-- **Repeated Page Inspections (`repeatedPageInspections`):** Inspection calls performed when the page state has already been inspected without an intervening DOM mutation (`chrome_click_element`, `chrome_fill_or_select`, `chrome_keyboard`, `chrome_navigate`, etc.).
-- **Retries (`retries`):** Failed tool calls that were re-attempted or polling loops.
+- **Repeated Page Inspections (`repeatedPageInspections`):** Inspection calls performed when the page state has already been inspected without a successful intervening state-changing action. Failed actions do not reset the inspected-state marker.
+- **Retries (`retries`):** In agent-proxy runs, a retry is the same tool + arguments invoked again after that exact call previously failed. Deterministic scenarios and manually analyzed traces can also mark explicit polling retries. Repeated successful inspections are tracked separately and are not automatically counted as retries.
 - **Task Success / Failure (`taskSuccess`):** Deterministic verification that the task goal was achieved in the DOM.
 
 ---
@@ -74,8 +74,11 @@ The agent benchmark evaluates how an LLM agent solves user tasks without a prede
 Run the agent benchmark recorder:
 
 ```bash
-# Launch recorder for a specific task:
-node benchmark/agent-recorder.mjs --task short-interaction
+# Launch recorder for a specific task and record the model configuration:
+node benchmark/agent-recorder.mjs \
+  --task short-interaction \
+  --model "gemini-3.8-flash" \
+  --reasoning-mode high
 
 # Available task IDs:
 #   short-interaction
@@ -90,6 +93,8 @@ The recorder:
 3. Prints the exact prompt for the task.
 4. Point your agent (Cursor, Claude Desktop, Antigravity, Claude Code, etc.) to the proxy URL and send the prompt.
 5. Press **[ENTER]** in the terminal once the agent finishes. The recorder performs automated DOM state verification and writes the structured run trace to `benchmark/results/agent-<task>-<timestamp>.json`.
+
+`--model` and `--reasoning-mode` are labels stored in the result metadata so before/after runs can be compared with the same agent configuration. They do not configure the external agent itself.
 
 #### Option B: Replay / Trace Analysis
 
