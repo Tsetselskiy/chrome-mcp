@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benchmark Fixture - Multi-Hop Site A (Origin)</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+        color: #1e293b;
+      }
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      nav a {
+        margin-left: 16px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      main {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+      th,
+      td {
+        border: 1px solid #e2e8f0;
+        padding: 12px 16px;
+        text-align: left;
+      }
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+      }
+      .token-box {
+        background: #fef3c7;
+        border: 1px solid #fde68a;
+        padding: 14px 18px;
+        border-radius: 6px;
+        margin: 20px 0;
+        font-family: monospace;
+        font-size: 15px;
+      }
+      a.next-link {
+        display: inline-block;
+        margin-top: 24px;
+        color: #2563eb;
+        text-decoration: underline;
+        font-weight: 500;
+        font-size: 15px;
+      }
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="font-weight: 700; font-size: 18px">Global Supply Net &bull; Origin Hub</div>
+      <nav>
+        <a href="#manifests">Manifests</a>
+        <a href="#transfers">Transfers</a>
+        <a href="#audit">Audit</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Origin Warehouse Dispatch System</h2>
+        <p>Transfer manifest pending verification and fulfillment.</p>
+
+        <div class="token-box">
+          Transfer Auth Token: <strong id="transfer-token">BENCHMARK-CODE-9204</strong>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Field</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Shipment ID</td><td id="shipment-id">SHP-88301</td></tr>
+            <tr><td>Destination Hub</td><td id="dest-hub">Central-Hub-West</td></tr>
+            <tr><td>Package Count</td><td id="pkg-count">12</td></tr>
+            <tr><td>Carrier Code</td><td id="carrier-code">FAST-EX-99</td></tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 24px">
+          Proceed to target processing portal:
+          <br />
+          <a id="link-to-site-b" class="next-link" href="/multihop/site-b.html"
+            >Open Fulfillment Gateway (Site B)</a
+          >
+        </p>
+      </div>
+    </main>
+
+    <footer> Global Supply Net &bull; Multi-Hop Benchmark Origin Fixture </footer>
+  </body>
+</html>

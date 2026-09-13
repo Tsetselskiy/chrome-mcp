@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benchmark Fixture - Dynamic Interaction</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+        color: #1e293b;
+      }
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      nav a {
+        margin-left: 16px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      main {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      .btn {
+        background: #0284c7;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .btn:hover {
+        background: #0369a1;
+      }
+      .results-list {
+        margin-top: 12px;
+        padding: 0;
+        list-style: none;
+      }
+      .results-item {
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .btn-select {
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .alert-success {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 16px 20px;
+        border-radius: 6px;
+        margin-top: 20px;
+        display: none;
+      }
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="font-weight: 700; font-size: 18px">Cluster Orchestrator</div>
+      <nav>
+        <a href="#clusters">Clusters</a>
+        <a href="#deployments">Deployments</a>
+        <a href="#quotas">Quotas</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Project Resource Allocator</h2>
+        <p>Search available clusters, select node size, and allocate quota.</p>
+
+        <div class="form-group">
+          <label for="filter-query">Filter Cluster Name:</label>
+          <input
+            type="text"
+            id="filter-query"
+            placeholder="Type to search (e.g. 'us-east')..."
+            oninput="onSearchInput(this.value)"
+          />
+        </div>
+
+        <div id="results-container">
+          <ul id="results-list" class="results-list">
+            <!-- Dynamically rendered items -->
+          </ul>
+        </div>
+
+        <div
+          id="allocation-form"
+          style="display: none; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 20px"
+        >
+          <h3>Configure Allocation for <span id="selected-cluster-name">None</span></h3>
+          <div class="form-group">
+            <label for="node-count">Node Count:</label>
+            <input type="number" id="node-count" value="4" min="1" max="64" />
+          </div>
+          <button id="submit-allocation-btn" class="btn" onclick="submitAllocation()"
+            >Confirm Allocation</button
+          >
+        </div>
+
+        <div id="success-alert" class="alert-success">
+          Allocation confirmed! Target: <strong id="confirmed-target"></strong> with
+          <strong id="confirmed-nodes"></strong> nodes. Reference ID:
+          <span id="ref-code">ALLOC-8891</span>
+        </div>
+      </div>
+    </main>
+
+    <footer> Cluster Orchestrator &bull; Dynamic Benchmark Fixture </footer>
+
+    <script>
+      const CLUSTERS = [
+        { id: 'us-east-prod', name: 'US-East Production Primary', nodes: 32 },
+        { id: 'us-west-stage', name: 'US-West Staging Cluster', nodes: 16 },
+        { id: 'eu-central-prod', name: 'EU-Central High-Memory', nodes: 24 },
+        { id: 'ap-south-dev', name: 'AP-South Development Pool', nodes: 8 },
+      ];
+
+      let currentSelectedCluster = null;
+
+      function renderResults(items) {
+        const list = document.getElementById('results-list');
+        list.innerHTML = '';
+        if (items.length === 0) {
+          list.innerHTML =
+            '<li style="color: #64748b; font-style: italic;">No clusters match your query.</li>';
+          return;
+        }
+        for (const item of items) {
+          const li = document.createElement('li');
+          li.className = 'results-item';
+          li.innerHTML = `
+          <div>
+            <strong>${item.name}</strong> (${item.id}) - Max nodes: ${item.nodes}
+          </div>
+          <button id="select-btn-${item.id}" class="btn-select" onclick="selectCluster('${item.id}', '${item.name}')">Select</button>
+        `;
+          list.appendChild(li);
+        }
+      }
+
+      let searchTimer = null;
+      function onSearchInput(val) {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          const query = (val || '').toLowerCase().trim();
+          const filtered = CLUSTERS.filter(
+            (c) => c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query),
+          );
+          renderResults(filtered);
+        }, 50);
+      }
+
+      function selectCluster(id, name) {
+        currentSelectedCluster = { id, name };
+        document.getElementById('selected-cluster-name').textContent = name;
+        document.getElementById('allocation-form').style.display = 'block';
+      }
+
+      function submitAllocation() {
+        if (!currentSelectedCluster) return;
+        const nodes = document.getElementById('node-count').value;
+        document.getElementById('confirmed-target').textContent = currentSelectedCluster.name;
+        document.getElementById('confirmed-nodes').textContent = nodes;
+        document.getElementById('success-alert').style.display = 'block';
+        document.getElementById('submit-allocation-btn').disabled = true;
+      }
+
+      // Initial render
+      renderResults(CLUSTERS);
+    </script>
+  </body>
+</html>

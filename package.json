@@ -25,6 +25,10 @@
     "clean:modules": "pnpm -r exec rm -rf node_modules && rm -rf node_modules",
     "clean": "npm run clean:dist && npm run clean:modules",
     "typecheck": "pnpm -r exec tsc --noEmit",
+    "benchmark": "node benchmark/runner.mjs",
+    "benchmark:mock": "node benchmark/mock-runner.mjs",
+    "benchmark:agent": "node benchmark/agent-recorder.mjs",
+    "test:benchmark": "node --test benchmark/test/*.test.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

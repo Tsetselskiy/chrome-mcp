@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Benchmark Fixture - Multi-Hop Site B (Target Gateway)</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f8fafc;
+        color: #1e293b;
+      }
+      header {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      nav a {
+        margin-left: 16px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      main {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 32px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+      .btn {
+        background: #16a34a;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .btn:hover {
+        background: #15803d;
+      }
+      .banner-success {
+        display: none;
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        padding: 16px 20px;
+        border-radius: 6px;
+        margin-top: 24px;
+      }
+      .banner-error {
+        display: none;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+        padding: 16px 20px;
+        border-radius: 6px;
+        margin-top: 24px;
+      }
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #94a3b8;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="font-weight: 700; font-size: 18px"
+        >Global Supply Net &bull; Fulfillment Gateway</div
+      >
+      <nav>
+        <a href="#inbound">Inbound</a>
+        <a href="#clearance">Clearance</a>
+        <a href="#reports">Reports</a>
+      </nav>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Fulfillment Authorization Gateway</h2>
+        <p>Submit verified credentials from origin manifest to authorize dispatch.</p>
+
+        <div class="form-group">
+          <label for="input-shipment-id">Shipment ID:</label>
+          <input type="text" id="input-shipment-id" placeholder="e.g. SHP-88301" />
+        </div>
+
+        <div class="form-group">
+          <label for="input-token">Transfer Auth Token:</label>
+          <input type="text" id="input-token" placeholder="e.g. BENCHMARK-CODE-..." />
+        </div>
+
+        <button id="authorize-dispatch-btn" class="btn" onclick="processAuthorization()"
+          >Authorize Dispatch</button
+        >
+
+        <div id="dispatch-success" class="banner-success">
+          Dispatched successfully! Shipment <strong id="res-shipment"></strong> cleared for Hub with
+          auth key: <strong id="res-key">DISPATCHED-OK-2026</strong>
+        </div>
+
+        <div id="dispatch-error" class="banner-error">
+          Invalid authorization token or shipment ID.
+        </div>
+      </div>
+    </main>
+
+    <footer> Global Supply Net &bull; Multi-Hop Benchmark Target Fixture </footer>
+
+    <script>
+      function processAuthorization() {
+        const shp = document.getElementById('input-shipment-id').value.trim();
+        const tok = document.getElementById('input-token').value.trim();
+
+        if (shp === 'SHP-88301' && tok === 'BENCHMARK-CODE-9204') {
+          document.getElementById('res-shipment').textContent = shp;
+          document.getElementById('dispatch-success').style.display = 'block';
+          document.getElementById('dispatch-error').style.display = 'none';
+          document.getElementById('authorize-dispatch-btn').disabled = true;
+        } else {
+          document.getElementById('dispatch-error').style.display = 'block';
+          document.getElementById('dispatch-success').style.display = 'none';
+        }
+      }
+    </script>
+  </body>
+</html>
