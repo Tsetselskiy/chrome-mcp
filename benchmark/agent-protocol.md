@@ -24,7 +24,7 @@ The benchmark suite defines three representative task categories. Each task star
   1. Button `#activate-btn` clicked.
   2. Status badge `#status-badge` reflects text `ACTIVE`.
   3. System message `#system-message` confirms `Service Activated Successfully`.
-- **Verification Routine:** `tasks.mjs` -> `verifyShortTask`.
+- **Verification Routine:** `tasks.mjs` -> task `verify()` implementation.
 
 ---
 
@@ -43,13 +43,13 @@ The benchmark suite defines three representative task categories. Each task star
   3. Form input `#node-count` is filled with value `8`.
   4. Submit button `#submit-allocation-btn` is clicked.
   5. Confirmation alert `#success-alert` is displayed with reference ID `ALLOC-8891`.
-- **Verification Routine:** `tasks.mjs` -> `verifyDynamicTask`.
+- **Verification Routine:** `tasks.mjs` -> task `verify()` implementation.
 
 ---
 
 ### Task 3: Longer Multi-Page Workflow (`longer-multipage-workflow`)
 
-- **Category:** Multi-page workflow with cross-site token/parameter transfer.
+- **Category:** Multi-page workflow with token/parameter transfer.
 - **Start URL:** `http://localhost:12399/multihop/site-a.html`
 - **Goal:** Inspect origin manifest, extract shipment ID and token, navigate to gateway portal, fill authorization form, and confirm dispatch.
 - **Exact Agent Prompt:**
@@ -63,7 +63,7 @@ The benchmark suite defines three representative task categories. Each task star
   4. Input `#input-token` filled with `BENCHMARK-CODE-9204`.
   5. Button `#authorize-dispatch-btn` clicked.
   6. Final message `#dispatch-banner` displays confirmation code `DISPATCHED-OK-2026`.
-- **Verification Routine:** `tasks.mjs` -> `verifyMultiHopTask`.
+- **Verification Routine:** `tasks.mjs` -> task `verify()` implementation.
 
 ---
 
@@ -76,7 +76,7 @@ To guarantee fair before/after comparisons between this baseline and future opti
 | **Task Prompt**            | Verbatim text from Section 1 above                                | Eliminates prompt engineering variance               |
 | **Fixture State**          | Local HTTP server on `127.0.0.1:12399` from `benchmark/fixtures/` | Ensures identical network latency and DOM structure  |
 | **Browser Start State**    | Fresh browser tab or isolated MCP pin group; no cached page state | Prevents cross-task contamination                    |
-| **Model & Reasoning Mode** | Explicitly recorded (e.g. `claude-3-7-sonnet` thinking standard)  | Enables model-controlled comparisons                 |
+| **Model & Reasoning Mode** | Explicitly recorded                                               | Enables model-controlled comparisons                 |
 | **Session Isolation**      | Fresh session/task instance for each run                          | Avoids context-window leakage from previous attempts |
 | **Success Criteria**       | Verified by deterministic DOM state inspection in `tasks.mjs`     | Objective ground truth                               |
 
@@ -102,15 +102,18 @@ Calls to tools that execute arbitrary JavaScript in the page:
 
 ### Repeated Page Inspections (`repeatedPageInspections`)
 
-An inspection call that occurs when the current page state has **already been inspected** and **no state-mutating action** has taken place since the last inspection.
+An inspection call that occurs when the current page state has **already been inspected** and **no successful state-changing action** has taken place since the last inspection.
 
 - **Inspection Tools:** `chrome_read_page`, `chrome_get_web_content`, `chrome_screenshot`, `chrome_get_interactive_elements`, `search_tabs_content`, `chrome_console`, and DOM query scripts via `chrome_javascript`.
-- **State Mutating Tools:** `chrome_click_element`, `chrome_fill_or_select`, `chrome_keyboard`, `chrome_handle_dialog`, `chrome_upload_file`, `chrome_navigate`, `chrome_switch_tab`.
-- _Rule:_ The first inspection after navigation or a DOM mutation is considered normal verification. Any subsequent inspection before the next mutation counts as a repeated inspection (e.g. re-reading the page because an element was not found, or following a read with a screenshot).
+- **State-changing tools/actions:** navigation, click/fill/keyboard actions, tab changes, uploads/dialog handling, mutating JavaScript, and `chrome_computer` actions that can change page/viewport/rendered state.
+- **Failed actions do not reset inspection state.** If an attempted click/fill/navigation fails and the agent inspects again, that inspection is still measured against the previously observed state.
+- _Rule:_ The first inspection after navigation or a successful state-changing action is considered normal verification. Any subsequent inspection before the next successful state change counts as a repeated inspection.
 
 ### Retries (`retries`)
 
-Number of tool invocations that returned an error and were subsequently re-attempted, or explicit polling attempts.
+For automated proxy captures, a retry is counted when the **same tool with the same arguments is invoked again after that exact call previously returned an error**. Multiple failed re-attempts each count as retries after the first failure.
+
+Deterministic scenarios and manually analyzed traces may additionally mark explicit polling attempts as retries. Repeated successful inspection/polling calls are not automatically inferred as retries by the generic proxy; they remain visible through `repeatedPageInspections`.
 
 ### Browser Execution Time (`browserExecutionTimeMs`)
 
@@ -122,18 +125,23 @@ The cumulative round-trip execution time (in milliseconds) spent in Chrome MCP t
 
 ### Procedure A: Automated Capture via Agent Recorder Proxy (Recommended)
 
-1. Start the Agent Recorder on port 12308:
+1. Start the Agent Recorder on port 12308 and explicitly record the model configuration:
    ```bash
-   node benchmark/agent-recorder.mjs --task short-interaction
+   node benchmark/agent-recorder.mjs \
+     --task short-interaction \
+     --model "gemini-3.8-flash" \
+     --reasoning-mode high
    ```
 2. The recorder will:
    - Start the fixture server at `http://localhost:12399`.
    - Start a transparent MCP proxy at `http://127.0.0.1:12308/mcp` forwarding to live Chrome MCP at `12307`.
    - Display the exact prompt.
-3. Configure your LLM agent (Cursor, Claude Desktop, Antigravity, Claude Code, etc.) to use `http://127.0.0.1:12308/mcp` as its Chrome MCP server.
+3. Configure your LLM agent to use `http://127.0.0.1:12308/mcp` as its Chrome MCP server.
 4. Send the prompt to the agent.
 5. When the agent completes the task, press **[ENTER]** in the recorder terminal.
 6. The recorder automatically verifies the final browser DOM state, writes the metrics JSON to `benchmark/results/agent-<task>-<timestamp>.json`, and prints the summary.
+
+`--model` and `--reasoning-mode` are metadata labels only; they do not configure the external LLM. The same labels and actual agent configuration must be used for comparable before/after runs.
 
 ### Procedure B: Manual Session Recording & Trace Analysis
 
@@ -148,7 +156,8 @@ If proxy routing is unavailable in your environment:
    ```json
    {
      "task": "short-interaction",
-     "model": "claude-3-7-sonnet",
+     "model": "example-model",
+     "reasoningMode": "high",
      "calls": [
        {
          "name": "chrome_navigate",
