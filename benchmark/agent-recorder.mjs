@@ -24,6 +24,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const RESULTS_DIR = path.join(__dirname, 'results');
 
+function makeCallSignature(name, args) {
+  return `${name || 'unknown'}:${JSON.stringify(args || {})}`;
+}
+
+function parseResponseContent(parsedResponse) {
+  const content = parsedResponse?.result?.content;
+  if (!Array.isArray(content)) {
+    return { responseData: null, responseText: '' };
+  }
+
+  const responseText = content.map((c) => c.text || '').join('');
+  try {
+    const responseData = JSON.parse(responseText);
+    return {
+      responseData: responseData && typeof responseData === 'object' ? responseData : null,
+      responseText,
+    };
+  } catch {
+    return { responseData: null, responseText };
+  }
+}
+
 export class AgentBenchmarkRecorder {
   constructor(options = {}) {
     this.proxyPort = options.proxyPort || parseInt(process.env.RECORDER_PORT || '12308', 10);
@@ -38,6 +60,7 @@ export class AgentBenchmarkRecorder {
     this.recordedEvents = [];
     this.activeTabId = null;
     this.isRecording = false;
+    this.failedCallSignatures = new Set();
   }
 
   async start() {
@@ -110,7 +133,8 @@ export class AgentBenchmarkRecorder {
     };
     summary.agentMetadata = {
       model: agentMetadata.model || process.env.AGENT_MODEL || 'external-agent',
-      reasoningMode: agentMetadata.reasoningMode || 'standard',
+      reasoningMode:
+        agentMetadata.reasoningMode || process.env.AGENT_REASONING_MODE || 'standard',
       environment: {
         proxyPort: this.proxyPort,
         targetMcpUrl: this.targetMcpUrl,
@@ -172,7 +196,11 @@ export class AgentBenchmarkRecorder {
       const forwardRes = await fetch(targetUrl.href, {
         method: clientReq.method,
         headers,
-        body: ['GET', 'HEAD'].includes(clientReq.method || '') ? undefined : (bodyBuffer.length > 0 ? bodyBuffer : undefined),
+        body: ['GET', 'HEAD'].includes(clientReq.method || '')
+          ? undefined
+          : bodyBuffer.length > 0
+            ? bodyBuffer
+            : undefined,
       });
 
       // Pass back status and headers
@@ -209,10 +237,9 @@ export class AgentBenchmarkRecorder {
       const durationMs = performance.now() - t0;
 
       if (rpcCalls.length > 0 && this.isRecording) {
-        let isError = forwardRes.status >= 400;
-        let responseData = null;
-
-        // Parse SSE or JSON results from Chrome MCP
+        // Parse SSE or JSON results from Chrome MCP and associate responses with
+        // their matching JSON-RPC request IDs. This prevents one failed response
+        // in a batch from marking every call in the batch as failed.
         const parsedResponses = [];
         if (resBody.trim().startsWith('{') || resBody.trim().startsWith('[')) {
           try {
@@ -232,20 +259,10 @@ export class AgentBenchmarkRecorder {
           }
         }
 
+        const responsesById = new Map();
         for (const parsedRes of parsedResponses) {
-          if (parsedRes.error) isError = true;
-          if (parsedRes.result?.isError) isError = true;
-          if (parsedRes.result?.content) {
-            const text = parsedRes.result.content.map((c) => c.text || '').join('');
-            try {
-              const contentJson = JSON.parse(text);
-              if (contentJson && typeof contentJson === 'object') {
-                responseData = contentJson;
-                if (contentJson.tabId) {
-                  this.activeTabId = contentJson.tabId;
-                }
-              }
-            } catch {}
+          if (parsedRes?.id !== undefined && parsedRes?.id !== null) {
+            responsesById.set(String(parsedRes.id), parsedRes);
           }
         }
 
@@ -256,20 +273,63 @@ export class AgentBenchmarkRecorder {
             this.activeTabId = toolArgs.tabId;
           }
 
+          const parsedRes = responsesById.get(String(rpc?.id));
+          const { responseData, responseText } = parseResponseContent(parsedRes);
+          if (responseData?.tabId) {
+            this.activeTabId = responseData.tabId;
+          }
+
+          const isError = Boolean(
+            forwardRes.status >= 400 || parsedRes?.error || parsedRes?.result?.isError,
+          );
+          const errorMessage =
+            parsedRes?.error?.message ||
+            (parsedRes?.result?.isError ? responseText || 'Tool returned isError: true' : null);
+
+          const signature = makeCallSignature(toolName, toolArgs);
+          const retried = this.failedCallSignatures.has(signature);
+          if (isError) {
+            this.failedCallSignatures.add(signature);
+          } else {
+            this.failedCallSignatures.delete(signature);
+          }
+
           const callEvt = this.collector.recordCall({
             name: toolName,
             args: toolArgs,
             durationMs: Math.round((durationMs / rpcCalls.length) * 100) / 100,
             isError,
+            error: errorMessage,
+            retried,
             resultMeta: responseData ? { keys: Object.keys(responseData) } : {},
           });
 
           console.log(
-            `  [Call #${callEvt.index}] ${toolName} (${callEvt.durationMs}ms)${isError ? ' [ERROR]' : ''}`,
+            `  [Call #${callEvt.index}] ${toolName} (${callEvt.durationMs}ms)${isError ? ' [ERROR]' : ''}${retried ? ' [RETRY]' : ''}`,
           );
         }
       }
     } catch (err) {
+      const durationMs = performance.now() - t0;
+      if (rpcCalls.length > 0 && this.isRecording) {
+        for (const rpc of rpcCalls) {
+          const toolName = rpc?.params?.name;
+          const toolArgs = rpc?.params?.arguments || {};
+          const signature = makeCallSignature(toolName, toolArgs);
+          const retried = this.failedCallSignatures.has(signature);
+          this.failedCallSignatures.add(signature);
+          this.collector.recordCall({
+            name: toolName,
+            args: toolArgs,
+            durationMs: Math.round((durationMs / rpcCalls.length) * 100) / 100,
+            isError: true,
+            error: err.message,
+            retried,
+            resultMeta: { transportError: true },
+          });
+        }
+      }
+
       console.error(`[Proxy Error]: ${err.message}`);
       clientRes.writeHead(502, { 'Content-Type': 'text/plain' });
       clientRes.end(`Bad Gateway: ${err.message}`);
@@ -281,9 +341,20 @@ export class AgentBenchmarkRecorder {
 if (process.argv[1] === __filename) {
   const args = process.argv.slice(2);
   let taskId = 'short-interaction';
+  let model = process.env.AGENT_MODEL || 'external-agent';
+  let reasoningMode = process.env.AGENT_REASONING_MODE || 'standard';
+
   const taskIndex = args.indexOf('--task');
   if (taskIndex !== -1 && args[taskIndex + 1]) {
     taskId = args[taskIndex + 1];
+  }
+  const modelIndex = args.indexOf('--model');
+  if (modelIndex !== -1 && args[modelIndex + 1]) {
+    model = args[modelIndex + 1];
+  }
+  const reasoningIndex = args.indexOf('--reasoning-mode');
+  if (reasoningIndex !== -1 && args[reasoningIndex + 1]) {
+    reasoningMode = args[reasoningIndex + 1];
   }
 
   const recorder = new AgentBenchmarkRecorder({ taskId });
@@ -292,41 +363,49 @@ if (process.argv[1] === __filename) {
   console.log('='.repeat(72));
   console.log(` Task ID:     ${recorder.task.id}`);
   console.log(` Task Name:   ${recorder.task.name}`);
+  console.log(` Model:       ${model}`);
+  console.log(` Reasoning:   ${reasoningMode}`);
   console.log(` Target MCP:  ${recorder.targetMcpUrl}`);
   console.log(` Proxy Port:  ${recorder.proxyPort}`);
   console.log('-'.repeat(72));
   console.log(` PROMPT FOR AGENT:\n"${recorder.task.prompt}"\n`);
   console.log('-'.repeat(72));
 
-  recorder.start().then(({ proxyUrl, fixtureBaseUrl }) => {
-    console.log(` ✓ Proxy listening at: ${proxyUrl}`);
-    console.log(` ✓ Fixtures hosted at: ${fixtureBaseUrl}`);
-    console.log('\nPoint your LLM agent to the Proxy URL above and provide the prompt.');
-    console.log('Press [ENTER] in this terminal when the agent has completed the task...\n');
+  recorder
+    .start()
+    .then(({ proxyUrl, fixtureBaseUrl }) => {
+      console.log(` ✓ Proxy listening at: ${proxyUrl}`);
+      console.log(` ✓ Fixtures hosted at: ${fixtureBaseUrl}`);
+      console.log('\nPoint your LLM agent to the Proxy URL above and provide the prompt.');
+      console.log('Press [ENTER] in this terminal when the agent has completed the task...\n');
 
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.question('', async () => {
-      console.log('\nTask completion indicated. Verifying browser state...');
-      const { summary, outFile, verification } = await recorder.verifyAndFinalize();
-      await recorder.stop();
-      rl.close();
+      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+      rl.question('', async () => {
+        console.log('\nTask completion indicated. Verifying browser state...');
+        const { summary, outFile, verification } = await recorder.verifyAndFinalize({
+          model,
+          reasoningMode,
+        });
+        await recorder.stop();
+        rl.close();
 
-      console.log('='.repeat(72));
-      console.log(` Result:               ${verification.success ? 'PASSED ✓' : 'FAILED ✗'}`);
-      if (!verification.success) {
-        console.log(` Failure Reason:       ${verification.reason}`);
-      }
-      console.log(` Total MCP Calls:      ${summary.totalMcpCalls}`);
-      console.log(` Low-Level JS Calls:   ${summary.lowLevelJsCalls}`);
-      console.log(` Repeated Inspections: ${summary.repeatedPageInspections}`);
-      console.log(` Retries:              ${summary.retries}`);
-      console.log(` Browser Time:         ${summary.browserExecutionTimeMs.toFixed(1)} ms`);
-      console.log(` Trace written to:     ${outFile}`);
-      console.log('='.repeat(72));
-      process.exit(verification.success ? 0 : 1);
+        console.log('='.repeat(72));
+        console.log(` Result:               ${verification.success ? 'PASSED ✓' : 'FAILED ✗'}`);
+        if (!verification.success) {
+          console.log(` Failure Reason:       ${verification.reason}`);
+        }
+        console.log(` Total MCP Calls:      ${summary.totalMcpCalls}`);
+        console.log(` Low-Level JS Calls:   ${summary.lowLevelJsCalls}`);
+        console.log(` Repeated Inspections: ${summary.repeatedPageInspections}`);
+        console.log(` Retries:              ${summary.retries}`);
+        console.log(` Browser Time:         ${summary.browserExecutionTimeMs.toFixed(1)} ms`);
+        console.log(` Trace written to:     ${outFile}`);
+        console.log('='.repeat(72));
+        process.exit(verification.success ? 0 : 1);
+      });
+    })
+    .catch((err) => {
+      console.error('Fatal error starting recorder:', err);
+      process.exit(1);
     });
-  }).catch((err) => {
-    console.error('Fatal error starting recorder:', err);
-    process.exit(1);
-  });
 }
