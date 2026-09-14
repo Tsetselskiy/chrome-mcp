@@ -1,0 +1,959 @@
+{
+  "scenario": "longer-multipage-workflow",
+  "taskSuccess": true,
+  "failureReason": null,
+  "totalMcpCalls": 29,
+  "lowLevelJsCalls": 13,
+  "mcpRoundTripTimeMs": 11625.94,
+  "browserExecutionTimeMs": null,
+  "wallClockDurationMs": 359194.1,
+  "pageInspectionCalls": 17,
+  "repeatedPageInspections": 10,
+  "retries": 0,
+  "toolBreakdown": {
+    "get_windows_and_tabs": 1,
+    "chrome_get_web_content": 2,
+    "chrome_switch_tab": 1,
+    "chrome_read_page": 5,
+    "chrome_fill_or_select": 4,
+    "chrome_javascript": 13,
+    "chrome_navigate": 1,
+    "chrome_click_element": 2
+  },
+  "metadata": {},
+  "events": [
+    {
+      "index": 1,
+      "timestamp": "2026-09-14T12:24:29.313Z",
+      "name": "get_windows_and_tabs",
+      "argsSummary": {},
+      "scopeKey": "tab:2022050429",
+      "durationMs": 15.67,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "windowCount",
+          "tabCount",
+          "mcpGroup",
+          "windows"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 2,
+      "timestamp": "2026-09-14T12:24:34.517Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 327.12,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "htmlContent"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 3,
+      "timestamp": "2026-09-14T12:24:42.209Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050435
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 334.98,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "htmlContent"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-14T12:25:42.169Z",
+      "name": "chrome_switch_tab",
+      "argsSummary": {
+        "tabId": 2022050435
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 28.07,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "tabId",
+          "windowId",
+          "url"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 5,
+      "timestamp": "2026-09-14T12:25:44.534Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050435
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 21.49,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 6,
+      "timestamp": "2026-09-14T12:25:47.107Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_13",
+        "tabId": 2022050435,
+        "value": "SHP-88301"
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 588.51,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-14T12:25:49.118Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_16",
+        "tabId": 2022050435,
+        "value": "BENCHMARK-CODE-9204"
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 638.95,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 8,
+      "timestamp": "2026-09-14T12:25:52.232Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050435
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.54,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 9,
+      "timestamp": "2026-09-14T12:26:09.240Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "return Array.from(document.scripts).map(s => s...."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 9.22,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "redacted",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 10,
+      "timestamp": "2026-09-14T12:26:10.587Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "return typeof checkInputs;"
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.13,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 11,
+      "timestamp": "2026-09-14T12:26:11.924Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "return processAuthorization.toString();"
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 31.09,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "redacted",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 12,
+      "timestamp": "2026-09-14T12:26:14.927Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const i1 = document.getElementById('input-shipm..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 17.1,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 13,
+      "timestamp": "2026-09-14T12:26:16.776Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const i1 = document.getElementById('input-shipm..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 18.31,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 14,
+      "timestamp": "2026-09-14T12:26:19.394Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const scripts = Array.from(document.querySelect..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.05,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 15,
+      "timestamp": "2026-09-14T12:26:20.960Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const text = document.querySelector('script').i..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.06,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "redacted",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 16,
+      "timestamp": "2026-09-14T12:26:23.088Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const text = document.querySelector('script').i..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.07,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 17,
+      "timestamp": "2026-09-14T12:26:25.165Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const i1 = document.getElementById('input-shipm..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.9,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 18,
+      "timestamp": "2026-09-14T12:26:26.675Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const text = document.querySelector('script').i..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 6.69,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 19,
+      "timestamp": "2026-09-14T12:26:29.521Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const text = document.querySelector('script').i..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 47.54,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 20,
+      "timestamp": "2026-09-14T12:26:31.204Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "const text = document.querySelector('script').i..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 19.97,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "redacted",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 21,
+      "timestamp": "2026-09-14T12:26:32.950Z",
+      "name": "chrome_javascript",
+      "argsSummary": {
+        "tabId": 2022050435,
+        "code": "return Array.from(document.querySelectorAll('*'..."
+      },
+      "scopeKey": "tab:2022050435",
+      "durationMs": 22.05,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": true,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "tabId",
+          "engine",
+          "result",
+          "metrics"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 22,
+      "timestamp": "2026-09-14T12:26:41.016Z",
+      "name": "chrome_navigate",
+      "argsSummary": {
+        "url": "http://localhost:12399/multihop/site-a.html",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 48.29,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "tabId",
+          "windowId",
+          "url"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 23,
+      "timestamp": "2026-09-14T12:26:42.694Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 22.84,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 24,
+      "timestamp": "2026-09-14T12:26:48.123Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_23",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 4003,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 25,
+      "timestamp": "2026-09-14T12:26:49.677Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 18.04,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 26,
+      "timestamp": "2026-09-14T12:26:52.117Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_13",
+        "tabId": 2022050429,
+        "value": "SHP-88301"
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 652.93,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 27,
+      "timestamp": "2026-09-14T12:26:54.114Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_16",
+        "tabId": 2022050429,
+        "value": "BENCHMARK-CODE-9204"
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 609.98,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 28,
+      "timestamp": "2026-09-14T12:27:01.111Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_17",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 4007.61,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 29,
+      "timestamp": "2026-09-14T12:27:02.911Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 20.74,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    }
+  ],
+  "benchmarkLayer": "agent-task-level",
+  "taskDefinition": {
+    "id": "longer-multipage-workflow",
+    "name": "Longer Multi-Page Workflow: Dispatch & Gateway Authorization",
+    "category": "longer-multipage",
+    "prompt": "Navigate to the Origin Hub dispatch manifest at http://localhost:12399/multihop/site-a.html. Find the transfer auth token and shipment ID. Then proceed to the Fulfillment Gateway at http://localhost:12399/multihop/site-b.html, enter both the shipment ID and transfer auth token into the authorization form, and authorize the dispatch. Confirm that authorization code DISPATCHED-OK-2026 is displayed."
+  },
+  "agentMetadata": {
+    "model": "Gemini 3.8 Flash High",
+    "reasoningMode": "High",
+    "environment": {
+      "proxyPort": 12308,
+      "targetMcpUrl": "http://127.0.0.1:12307/mcp",
+      "nodeVersion": "v22.23.2",
+      "platform": "win32"
+    },
+    "condition": "BEFORE",
+    "sourceSha": "b846235b747920d07baad2312af4525da7745383",
+    "chromeVersion": "152.0.7977.83",
+    "os": "win32 x64",
+    "runIndex": "3"
+  }
+}

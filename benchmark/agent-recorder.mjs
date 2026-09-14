@@ -91,6 +91,7 @@ export class AgentBenchmarkRecorder {
     this.server = null;
     this.fixtureServer = null;
     this.mcpClient = options.mcpClient || null;
+    this.customClient = Boolean(options.mcpClient);
     this.activeTabId = null;
     this.isRecording = false;
     this.failedCallSignatures = new Set();
@@ -105,7 +106,7 @@ export class AgentBenchmarkRecorder {
       try {
         await this.mcpClient.connect();
       } catch (err) {
-        console.warn(`[Recorder] Notice: Target MCP connection check: ${err.message}`);
+        console.warn(`[Recorder] Initial MCP client connection warning: ${err.message}`);
       }
     }
 
@@ -130,11 +131,11 @@ export class AgentBenchmarkRecorder {
 
   async resetBrowserTab() {
     try {
-      if (!this.mcpClient) {
+      if (!this.customClient) {
         this.mcpClient = new BenchmarkMcpClient({ url: this.targetMcpUrl });
         await this.mcpClient.connect();
       }
-      const tabsRes = await this.mcpClient.callTool('get_windows_and_tabs');
+      const tabsRes = await this.mcpClient?.callTool('get_windows_and_tabs');
       if (tabsRes?.ok && tabsRes?.data?.windows && tabsRes.data.windows[0]?.tabs) {
         const activeTab = tabsRes.data.windows[0].tabs.find((t) => t.active);
         const tabId = activeTab ? activeTab.tabId : tabsRes.data.windows[0].tabs[0].tabId;
@@ -163,6 +164,10 @@ export class AgentBenchmarkRecorder {
   async verifyAndFinalize(agentMetadata = {}) {
     let verification = { success: false, reason: 'Verification not run' };
     try {
+      if (!this.customClient) {
+        this.mcpClient = new BenchmarkMcpClient({ url: this.targetMcpUrl });
+        await this.mcpClient.connect();
+      }
       if (this.task?.verify && this.mcpClient) {
         verification = await this.task.verify(this.mcpClient, { tabId: this.activeTabId });
       }
