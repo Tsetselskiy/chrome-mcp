@@ -543,29 +543,37 @@
     const contextParts = [];
     try {
       // 1. Closest container: table row, form, fieldset, section, article, role container
-      const container = el.closest(
-        'tr, form, fieldset, section, article, [role="region"], [role="group"], [role="row"], li',
-      );
-      if (container) {
-        const legendOrHeader = container.querySelector(
-          'legend, caption, th, h1, h2, h3, h4, h5, h6, [role="heading"]',
-        );
-        if (legendOrHeader && legendOrHeader.textContent) {
-          const text = legendOrHeader.textContent.trim().replace(/\s+/g, ' ');
-          if (text) contextParts.push(text);
+      let cur = el;
+      while (cur && contextParts.length === 0) {
+        if (typeof cur.closest === 'function') {
+          const container = cur.closest(
+            'tr, form, fieldset, section, article, [role="region"], [role="group"], [role="row"], li',
+          );
+          if (container) {
+            const legendOrHeader = container.querySelector(
+              'legend, caption, th, h1, h2, h3, h4, h5, h6, [role="heading"]',
+            );
+            if (legendOrHeader && legendOrHeader.textContent) {
+              const text = legendOrHeader.textContent.trim().replace(/\s+/g, ' ');
+              if (text) contextParts.push(text);
+              break;
+            }
+          }
         }
+        cur = cur.parentElement || (cur.parentNode && cur.parentNode.host ? cur.parentNode.host : null);
       }
-      // 2. Preceding heading in DOM
+
+      // 2. Preceding heading in DOM (crossing shadow roots if needed)
       let node = el;
       while (node && contextParts.length < 2) {
         let sibling = node.previousElementSibling;
         while (sibling) {
-          if (/^h[1-6]$/i.test(sibling.tagName) || sibling.getAttribute('role') === 'heading') {
+          if (/^h[1-6]$/i.test(sibling.tagName) || sibling.getAttribute?.('role') === 'heading') {
             const t = sibling.textContent ? sibling.textContent.trim().replace(/\s+/g, ' ') : '';
             if (t && !contextParts.includes(t)) contextParts.push(t);
             break;
           }
-          const nested = sibling.querySelector('h1, h2, h3, h4, h5, h6, [role="heading"]');
+          const nested = sibling.querySelector?.('h1, h2, h3, h4, h5, h6, [role="heading"]');
           if (nested && nested.textContent) {
             const t = nested.textContent.trim().replace(/\s+/g, ' ');
             if (t && !contextParts.includes(t)) contextParts.push(t);
@@ -573,7 +581,7 @@
           }
           sibling = sibling.previousElementSibling;
         }
-        node = node.parentElement;
+        node = node.parentElement || (node.parentNode && node.parentNode.host ? node.parentNode.host : null);
       }
     } catch (_) {}
     return contextParts.slice(0, 2).join(' | ');

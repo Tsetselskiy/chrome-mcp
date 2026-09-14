@@ -61,10 +61,12 @@ if (window.__FILL_HELPER_INITIALIZED__) {
         },
       };
 
+      const targetDesc = selector ? `selector "${selector}"` : `ref "${ref}"`;
+
       // Check if element is visible
       if (!elementInfo.isVisible) {
         return {
-          error: `Element with selector "${selector}" is not visible`,
+          error: `Element with ${targetDesc} is not visible`,
           elementInfo,
         };
       }
@@ -120,19 +122,19 @@ if (window.__FILL_HELPER_INITIALIZED__) {
             }
             if (!validTags.includes(element.tagName)) {
               return {
-                error: `Element with selector "${selector}" is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
+                error: `Element with ${targetDesc} is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
                 elementInfo,
               };
             }
           } else {
             return {
-              error: `Element with selector "${selector}" is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
+              error: `Element with ${targetDesc} is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
               elementInfo,
             };
           }
         } catch (_) {
           return {
-            error: `Element with selector "${selector}" is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
+            error: `Element with ${targetDesc} is not a fillable element (must be INPUT, TEXTAREA, or SELECT)`,
             elementInfo,
           };
         }

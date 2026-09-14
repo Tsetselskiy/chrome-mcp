@@ -502,6 +502,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
         if (params.ref) {
           // Prefer DOM click via ref
           const domResult = await clickTool.execute({
+            tabId: tab.id,
             ref: params.ref,
             waitForNavigation: false,
             timeout: TIMEOUTS.DEFAULT_WAIT * 5,
@@ -513,6 +514,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
         if (params.selector) {
           // Support selector-based click
           const domResult = await clickTool.execute({
+            tabId: tab.id,
             selector: params.selector,
             selectorType: params.selectorType,
             frameId: params.frameId,
@@ -549,6 +551,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
         const coord = project(params.coordinates)!;
         // Prefer DOM path via existing click tool
         const domResult = await clickTool.execute({
+          tabId: tab.id,
           coordinates: coord,
           waitForNavigation: false,
           timeout: TIMEOUTS.DEFAULT_WAIT * 5,
@@ -935,6 +938,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
           // Optional focus via ref before typing
           if (params.ref) {
             await clickTool.execute({
+              tabId: tab.id,
               ref: params.ref,
               waitForNavigation: false,
               timeout: TIMEOUTS.DEFAULT_WAIT * 5,
@@ -961,6 +965,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
           await CDPHelper.detach(tab.id);
           // Fallback to DOM-based keyboard tool
           const res = await keyboardTool.execute({
+            tabId: tab.id,
             keys: params.text.split('').join(','),
             delay: 0,
             selector: undefined,
@@ -974,6 +979,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
         }
         // Reuse existing fill tool to leverage robust DOM event behavior
         const res = await fillTool.execute({
+          tabId: tab.id,
           selector: params.selector as any,
           selectorType: params.selectorType as any,
           ref: params.ref as any,
@@ -997,6 +1003,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
           }
           try {
             const r = await fillTool.execute({
+              tabId: tab.id,
               ref: item.ref as any,
               value: item.value as any,
             } as any);
@@ -1041,6 +1048,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
           // Optional focus via ref before key events
           if (params.ref) {
             await clickTool.execute({
+              tabId: tab.id,
               ref: params.ref,
               waitForNavigation: false,
               timeout: TIMEOUTS.DEFAULT_WAIT * 5,
@@ -1069,7 +1077,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
           const keysStr = tokens.join(',');
           const repeatedKeys =
             repeat === 1 ? keysStr : Array.from({ length: repeat }, () => keysStr).join(',');
-          const res = await keyboardTool.execute({ keys: repeatedKeys });
+          const res = await keyboardTool.execute({ tabId: tab.id, keys: repeatedKeys });
           return res;
         }
       }
@@ -1283,6 +1291,7 @@ class ComputerTool extends BaseBrowserToolExecutor {
       case 'screenshot': {
         // Reuse existing screenshot tool; it already supports base64 save option
         const result = await screenshotTool.execute({
+          tabId: tab.id,
           name: 'computer',
           storeBase64: true,
           fullPage: false,

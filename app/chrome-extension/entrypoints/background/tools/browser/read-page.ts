@@ -162,6 +162,12 @@ class ReadPageTool extends BaseBrowserToolExecutor {
 
       // If natural-language interaction intent is provided, perform semantic action retrieval
       if (args?.intent && typeof args.intent === 'string' && args.intent.trim()) {
+        if (!treeOk) {
+          return createErrorResponse(
+            resp?.error || 'Failed to generate accessibility tree for semantic action retrieval',
+          );
+        }
+
         const intent = args.intent.trim();
         const maxCandidates =
           args.maxCandidates !== undefined &&

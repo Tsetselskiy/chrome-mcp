@@ -58,6 +58,13 @@ class ActionableCandidatesTool extends BaseBrowserToolExecutor {
         action: TOOL_MESSAGE_TYPES.GET_ACTIONABLE_ELEMENTS,
       });
 
+      if (!resp || resp.success === false) {
+        return createErrorResponse(
+          resp?.error ||
+            'Failed to retrieve actionable elements from page accessibility tree. Consider calling chrome_read_page or chrome_screenshot.',
+        );
+      }
+
       const elements = Array.isArray(resp?.actionableElements)
         ? resp.actionableElements
         : Array.isArray(resp?.refMap)

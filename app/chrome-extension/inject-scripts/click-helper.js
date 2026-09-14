@@ -149,6 +149,10 @@ if (window.__CLICK_HELPER_INITIALIZED__) {
         // First sroll so that the element is in view, then check visibility.
         element.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
         await new Promise((resolve) => setTimeout(resolve, 100));
+        if (selector && !element.isConnected) {
+          const fresh = document.querySelector(selector);
+          if (fresh) element = fresh;
+        }
         elementInfo.isVisible = isElementVisible(element);
         if (!elementInfo.isVisible) {
           return {
