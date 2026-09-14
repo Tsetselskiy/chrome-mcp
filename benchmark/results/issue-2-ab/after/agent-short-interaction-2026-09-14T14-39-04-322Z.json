@@ -4,29 +4,28 @@
   "failureReason": null,
   "totalMcpCalls": 7,
   "lowLevelJsCalls": 0,
-  "mcpRoundTripTimeMs": 1906.93,
+  "mcpRoundTripTimeMs": 901.76,
   "browserExecutionTimeMs": null,
-  "wallClockDurationMs": 46672.52,
-  "pageInspectionCalls": 4,
-  "repeatedPageInspections": 2,
+  "wallClockDurationMs": 360507.55,
+  "pageInspectionCalls": 3,
+  "repeatedPageInspections": 1,
   "retries": 0,
   "toolBreakdown": {
     "get_windows_and_tabs": 1,
-    "chrome_navigate": 1,
-    "chrome_get_actionable_candidates": 1,
-    "chrome_get_web_content": 2,
+    "chrome_navigate": 2,
+    "chrome_read_page": 2,
     "chrome_click_element": 1,
-    "chrome_read_page": 1
+    "chrome_get_web_content": 1
   },
   "metadata": {},
   "events": [
     {
       "index": 1,
-      "timestamp": "2026-09-14T13:25:37.201Z",
+      "timestamp": "2026-09-14T14:38:33.850Z",
       "name": "get_windows_and_tabs",
       "argsSummary": {},
-      "scopeKey": "tab:2022050448",
-      "durationMs": 14.15,
+      "scopeKey": "tab:2022050472",
+      "durationMs": 7.85,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -48,14 +47,14 @@
     },
     {
       "index": 2,
-      "timestamp": "2026-09-14T13:25:50.465Z",
+      "timestamp": "2026-09-14T14:38:37.553Z",
       "name": "chrome_navigate",
       "argsSummary": {
         "url": "http://localhost:12399/short/index.html",
-        "tabId": 2022050429
+        "tabId": 2022050529
       },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 44.7,
+      "scopeKey": "tab:2022050529",
+      "durationMs": 28.3,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -78,32 +77,27 @@
     },
     {
       "index": 3,
-      "timestamp": "2026-09-14T13:25:54.772Z",
-      "name": "chrome_get_actionable_candidates",
+      "timestamp": "2026-09-14T14:38:40.485Z",
+      "name": "chrome_navigate",
       "argsSummary": {
-        "tabId": 2022050429,
-        "intent": "activate primary service"
+        "url": "http://localhost:12399/short/index.html",
+        "tabId": 2022050529
       },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 20.13,
+      "scopeKey": "tab:2022050529",
+      "durationMs": 25.96,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
-      "isInspection": true,
-      "isMutation": false,
+      "isInspection": false,
+      "isMutation": true,
       "retried": false,
       "resultMeta": {
         "keys": [
           "success",
-          "intent",
-          "candidates",
-          "topCandidate",
-          "returnedCandidatesCount",
-          "totalActionableElements",
-          "pageContent",
-          "isStale",
-          "domRevision",
-          "viewport"
+          "message",
+          "tabId",
+          "windowId",
+          "url"
         ],
         "batchSize": 1,
         "timingAttribution": "single-http-roundtrip",
@@ -113,13 +107,14 @@
     },
     {
       "index": 4,
-      "timestamp": "2026-09-14T13:25:58.703Z",
-      "name": "chrome_get_web_content",
+      "timestamp": "2026-09-14T14:38:42.449Z",
+      "name": "chrome_read_page",
       "argsSummary": {
-        "tabId": 2022050429
+        "tabId": 2022050529,
+        "intent": "activate primary service"
       },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 29.16,
+      "scopeKey": "tab:2022050529",
+      "durationMs": 11.72,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -129,11 +124,28 @@
       "resultMeta": {
         "keys": [
           "success",
-          "url",
-          "title",
-          "textContent",
-          "article",
-          "metadata"
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason",
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
+          "isStale",
+          "domRevision"
         ],
         "batchSize": 1,
         "timingAttribution": "single-http-roundtrip",
@@ -143,14 +155,15 @@
     },
     {
       "index": 5,
-      "timestamp": "2026-09-14T13:26:02.042Z",
+      "timestamp": "2026-09-14T14:38:45.351Z",
       "name": "chrome_click_element",
       "argsSummary": {
-        "ref": "ref_6",
-        "tabId": 2022050429
+        "selector": "#activate-btn",
+        "ref": "ref_12",
+        "tabId": 2022050529
       },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 1426.14,
+      "scopeKey": "tab:2022050529",
+      "durationMs": 796.01,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -173,43 +186,14 @@
     },
     {
       "index": 6,
-      "timestamp": "2026-09-14T13:26:04.744Z",
-      "name": "chrome_get_web_content",
-      "argsSummary": {
-        "tabId": 2022050429
-      },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 354.08,
-      "isError": false,
-      "error": null,
-      "isLowLevelJs": false,
-      "isInspection": true,
-      "isMutation": false,
-      "retried": false,
-      "resultMeta": {
-        "keys": [
-          "success",
-          "url",
-          "title",
-          "textContent",
-          "article",
-          "metadata"
-        ],
-        "batchSize": 1,
-        "timingAttribution": "single-http-roundtrip",
-        "missingResponse": false,
-        "transportError": false
-      }
-    },
-    {
-      "index": 7,
-      "timestamp": "2026-09-14T13:26:06.697Z",
+      "timestamp": "2026-09-14T14:38:47.406Z",
       "name": "chrome_read_page",
       "argsSummary": {
-        "tabId": 2022050429
+        "tabId": 2022050529,
+        "filter": "interactive"
       },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 18.57,
+      "scopeKey": "tab:2022050529",
+      "durationMs": 6.12,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -240,6 +224,36 @@
         "missingResponse": false,
         "transportError": false
       }
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-14T14:38:53.997Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050529
+      },
+      "scopeKey": "tab:2022050529",
+      "durationMs": 25.8,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "textContent",
+          "article",
+          "metadata"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
     }
   ],
   "benchmarkLayer": "agent-task-level",
@@ -259,9 +273,9 @@
       "platform": "win32"
     },
     "condition": "AFTER",
-    "sourceSha": "1944624",
+    "sourceSha": "1342ebf",
     "chromeVersion": "152.0.7977.83",
     "os": "win32 x64",
-    "runIndex": "1"
+    "runIndex": "3"
   }
 }

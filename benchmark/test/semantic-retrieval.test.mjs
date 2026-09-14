@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 import {
   rankActionableElements,
@@ -7,6 +8,7 @@ import {
   formatCandidatesAsContent,
   SemanticActionCache,
   buildCandidateDescriptor,
+  TOOL_SCHEMAS,
 } from '../../packages/shared/dist/index.mjs';
 
 test('Semantic Action Retrieval - 1. Clear intent ranks target button #1', () => {
@@ -261,4 +263,66 @@ test('Semantic Action Retrieval - 6. Candidate descriptor construction and conte
   assert.ok(formatted.includes('[ref=ref_42]'));
   assert.ok(formatted.includes('Main LLM Decision: Choose one candidate ref'));
   assert.ok(formatted.includes('chrome_computer'));
+});
+
+test('Semantic Action Retrieval - 7. chrome_read_page intent contract prioritizes compact candidates', () => {
+  const readPageSchema = TOOL_SCHEMAS.find((t) => t.name === 'chrome_read_page');
+  assert.ok(readPageSchema, 'chrome_read_page schema must exist');
+  assert.ok(readPageSchema.inputSchema.properties.intent, 'intent property must exist on read_page');
+  assert.ok(
+    readPageSchema.description.includes('intent'),
+    'read_page description must document intent usage',
+  );
+
+  const elements = [
+    { ref: 'ref_1', role: 'button', name: 'Submit Application', context: 'Form actions' },
+    { ref: 'ref_2', role: 'button', name: 'Cancel', context: 'Footer' },
+  ];
+  const ranked = rankActionableElements(elements, 'submit application');
+  const formatted = formatCandidatesAsContent(
+    ranked.candidates,
+    'submit application',
+    elements.length,
+  );
+
+  assert.ok(formatted.includes('[ref=ref_1]'));
+  assert.ok(formatted.includes('Submit Application'));
+  assert.ok(formatted.includes('Main LLM Decision'));
+  assert.equal(formatted.includes('- document\n'), false, 'Candidate format must not be full tree');
+});
+
+test('Semantic Action Retrieval - 8. Zero benchmark fixture leakage in shared tools and retriever', () => {
+  const toolsSource = fs.readFileSync(
+    new URL('../../packages/shared/src/tools.ts', import.meta.url),
+    'utf8',
+  );
+  const retrieverSource = fs.readFileSync(
+    new URL('../../packages/shared/src/semantic-action-retriever.ts', import.meta.url),
+    'utf8',
+  );
+
+  const benchmarkTokens = [
+    'cloudops',
+    'us-east',
+    'production primary',
+    'alloc-8891',
+    'origin hub',
+    'fulfillment gateway',
+    'shp-88301',
+    'benchmark-code-9204',
+    'dispatched-ok-2026',
+  ];
+
+  for (const token of benchmarkTokens) {
+    assert.equal(
+      toolsSource.toLowerCase().includes(token),
+      false,
+      `tools.ts must not leak benchmark token: "${token}"`,
+    );
+    assert.equal(
+      retrieverSource.toLowerCase().includes(token),
+      false,
+      `semantic-action-retriever.ts must not leak benchmark token: "${token}"`,
+    );
+  }
 });

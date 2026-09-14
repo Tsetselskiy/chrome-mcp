@@ -65,7 +65,13 @@ class ReadPageTool extends BaseBrowserToolExecutor {
 
       // Load any user-marked elements for this URL (priority hints)
       const currentUrl = String(tab.url || '');
-      const userMarkers = currentUrl ? await listMarkersForUrl(currentUrl) : [];
+      let rawMarkers: any[] = [];
+      try {
+        rawMarkers = currentUrl ? (await listMarkersForUrl(currentUrl)) || [] : [];
+      } catch (_) {
+        rawMarkers = [];
+      }
+      const userMarkers = Array.isArray(rawMarkers) ? rawMarkers : [];
 
       // Inject helper in ISOLATED world to enable chrome.runtime messaging
       // Inject into all frames to support same-origin iframe operations
@@ -162,12 +168,6 @@ class ReadPageTool extends BaseBrowserToolExecutor {
 
       // If natural-language interaction intent is provided, perform semantic action retrieval
       if (args?.intent && typeof args.intent === 'string' && args.intent.trim()) {
-        if (!treeOk) {
-          return createErrorResponse(
-            resp?.error || 'Failed to generate accessibility tree for semantic action retrieval',
-          );
-        }
-
         const intent = args.intent.trim();
         const maxCandidates =
           args.maxCandidates !== undefined &&
@@ -176,11 +176,42 @@ class ReadPageTool extends BaseBrowserToolExecutor {
             ? Number(args.maxCandidates)
             : 5;
         const domRevision = Number(resp?.domRevision || 1);
-        const elements = Array.isArray(resp?.actionableElements)
+        let elements = Array.isArray(resp?.actionableElements)
           ? resp.actionableElements
           : Array.isArray(resp?.refMap)
             ? resp.refMap
             : [];
+
+        // Safe fallback: if tree generation failed or yielded no elements, attempt interactive-elements fallback
+        let semanticFallbackUsed = false;
+        if ((!treeOk || elements.length === 0) && tab.id) {
+          try {
+            await this.injectContentScript(tab.id, ['inject-scripts/interactive-elements-helper.js']);
+            const fallback = await this.sendMessageToTab(tab.id, {
+              action: TOOL_MESSAGE_TYPES.GET_INTERACTIVE_ELEMENTS,
+              includeCoordinates: true,
+            });
+            if (fallback && fallback.success && Array.isArray(fallback.elements) && fallback.elements.length > 0) {
+              elements = fallback.elements.map((el: any, idx: number) => ({
+                ref: el.ref || `ref_${idx + 1}`,
+                role: el.type || 'element',
+                name: el.text || '',
+                selector: el.selector,
+                coordinates: el.coordinates,
+                context: el.context || '',
+              }));
+              semanticFallbackUsed = true;
+            }
+          } catch (fallbackErr) {
+            console.warn('read_page semantic fallback failed:', fallbackErr);
+          }
+        }
+
+        if (!treeOk && elements.length === 0) {
+          return createErrorResponse(
+            resp?.error || 'Failed to generate accessibility tree for semantic action retrieval',
+          );
+        }
 
         const cached = globalActionCache.get(tab.id, currentUrl, domRevision);
         let ranked: {
@@ -189,14 +220,16 @@ class ReadPageTool extends BaseBrowserToolExecutor {
           embeddings: Float32Array[];
         };
 
-        if (cached && cached.elements && cached.embeddings) {
+        if (cached && cached.elements && cached.embeddings && !semanticFallbackUsed) {
           ranked = rankActionableElements(cached.elements, intent, {
             maxCandidates,
             cachedEmbeddings: cached.embeddings,
           });
         } else {
           ranked = rankActionableElements(elements, intent, { maxCandidates });
-          globalActionCache.set(tab.id, currentUrl, domRevision, elements, ranked.embeddings);
+          if (!semanticFallbackUsed) {
+            globalActionCache.set(tab.id, currentUrl, domRevision, elements, ranked.embeddings);
+          }
         }
 
         const candidateContent = formatCandidatesAsContent(
@@ -205,17 +238,28 @@ class ReadPageTool extends BaseBrowserToolExecutor {
           elements.length,
         );
 
-        basePayload.intent = intent;
-        basePayload.candidates = ranked.candidates;
-        basePayload.topCandidate = ranked.topCandidate;
-        basePayload.returnedCandidatesCount = ranked.candidates.length;
-        basePayload.totalActionableElements = elements.length;
-        basePayload.pageContent = candidateContent;
-        basePayload.isStale = false;
-        basePayload.domRevision = domRevision;
+        const semanticPayload: Record<string, any> = {
+          success: true,
+          intent,
+          pageContent: candidateContent,
+          candidates: ranked.candidates,
+          topCandidate: ranked.topCandidate,
+          returnedCandidatesCount: ranked.candidates.length,
+          totalActionableElements: elements.length,
+          viewport: treeOk && resp?.viewport ? resp.viewport : { width: null, height: null, dpr: null },
+          stats: stats || { processed: 0, included: elements.length, durationMs: 0 },
+          domRevision,
+          isStale: false,
+          fallbackUsed: semanticFallbackUsed,
+          fallbackSource: semanticFallbackUsed ? 'get_interactive_elements' : null,
+          tips:
+            ranked.candidates.length > 0
+              ? 'Tip: Choose one candidate ref and execute your action via chrome_click_element, chrome_fill_or_select, or chrome_computer (with ref). If the element you need is not in this compact candidate list, call chrome_read_page without intent for full page inspection.'
+              : 'No candidates matched the intent. Call chrome_read_page without intent for full page inspection, or try a different intent description.',
+        };
 
         return {
-          content: [{ type: 'text', text: JSON.stringify(basePayload) }],
+          content: [{ type: 'text', text: JSON.stringify(semanticPayload) }],
           isError: false,
         };
       }

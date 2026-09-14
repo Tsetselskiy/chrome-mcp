@@ -9,6 +9,12 @@ import {
   type ActionableElementSummary,
 } from 'agent-chrome-mcp-shared';
 
+vi.mock('@/entrypoints/background/element-marker/element-marker-storage', () => ({
+  listMarkersForUrl: vi.fn().mockResolvedValue([]),
+}));
+
+import { readPageTool } from '../entrypoints/background/tools/browser/read-page';
+
 describe('Semantic Action Retrieval System', () => {
   beforeEach(() => {
     globalActionCache.invalidate();
@@ -293,6 +299,133 @@ describe('Semantic Action Retrieval System', () => {
       expect(formatted).toContain('[ref=ref_exec_42]');
       expect(formatted).toContain('coords: (x=320,y=480)');
       expect(formatted).toContain('Main LLM Decision: Choose one candidate ref');
+    });
+  });
+
+  describe('Criterion 7: chrome_read_page with intent contract', () => {
+    beforeEach(() => {
+      (readPageTool as any).tryGetTab = vi
+        .fn()
+        .mockResolvedValue({ id: 101, url: 'http://localhost/test' });
+      (readPageTool as any).getActiveTabOrThrowInWindow = vi
+        .fn()
+        .mockResolvedValue({ id: 101, url: 'http://localhost/test' });
+      (readPageTool as any).injectContentScript = vi.fn().mockResolvedValue(undefined);
+    });
+
+    it('read_page(intent) returns compact ranked candidates without large accessibility tree', async () => {
+      const mockElements = [
+        { ref: 'ref_1', role: 'button', name: 'Submit Application', context: 'Form actions' },
+        { ref: 'ref_2', role: 'button', name: 'Cancel', context: 'Footer' },
+      ];
+      const fullAccessibilityTree =
+        '- document\n  - main\n    - button "Submit Application" [ref=ref_1]\n    - button "Cancel" [ref=ref_2]\n    - div "Long text 1"\n    - div "Long text 2"\n    - div "Long text 3"\n    - div "Long text 4"\n    - div "Long text 5"\n    - div "Long text 6"\n    - div "Long text 7"\n    - div "Long text 8"\n    - div "Long text 9"\n    - div "Long text 10"';
+
+      (readPageTool as any).sendMessageToTab = vi.fn().mockResolvedValue({
+        success: true,
+        pageContent: fullAccessibilityTree,
+        actionableElements: mockElements,
+        viewport: { width: 1280, height: 720, dpr: 1 },
+        stats: { processed: 20, included: 2, durationMs: 2 },
+        domRevision: 1,
+      });
+
+      const res = await readPageTool.execute({ intent: 'submit the application' });
+      expect(res.isError).toBe(false);
+      const data = JSON.parse((res.content[0] as any).text);
+
+      // Prioritizes semantic candidate result
+      expect(data.success).toBe(true);
+      expect(data.intent).toBe('submit the application');
+      expect(data.candidates.length).toBeGreaterThan(0);
+      expect(data.topCandidate?.ref).toBe('ref_1');
+      expect(data.topCandidate?.role).toBe('button');
+      expect(data.topCandidate?.name).toBe('Submit Application');
+      expect(data.topCandidate?.score).toBeGreaterThanOrEqual(0.6);
+
+      // PageContent is compact candidates representation, NOT the full accessibility tree
+      expect(data.pageContent).toContain('Actionable Element Candidates for intent "submit the application"');
+      expect(data.pageContent).toContain('[ref=ref_1]');
+      expect(data.pageContent).not.toContain(fullAccessibilityTree);
+
+      // Minimal metadata included
+      expect(data.viewport).toEqual({ width: 1280, height: 720, dpr: 1 });
+      expect(data.domRevision).toBe(1);
+      expect(data.tips).toContain('chrome_click_element');
+    });
+
+    it('normal read_page() without intent remains unchanged (returns full tree)', async () => {
+      const fullAccessibilityTree =
+        '- document\n  - main\n    - button "Submit Application" [ref=ref_1]\n    - div "Content 1"\n    - div "Content 2"\n    - div "Content 3"\n    - div "Content 4"\n    - div "Content 5"\n    - div "Content 6"\n    - div "Content 7"\n    - div "Content 8"\n    - div "Content 9"\n    - div "Content 10"';
+
+      (readPageTool as any).sendMessageToTab = vi.fn().mockResolvedValue({
+        success: true,
+        pageContent: fullAccessibilityTree,
+        refMap: [{ ref: 'ref_1', role: 'button', name: 'Submit' }],
+        viewport: { width: 1280, height: 720, dpr: 1 },
+        stats: { processed: 11, included: 11, durationMs: 2 },
+      });
+
+      const res = await readPageTool.execute({});
+      expect(res.isError).toBe(false);
+      const data = JSON.parse((res.content[0] as any).text);
+
+      expect(data.success).toBe(true);
+      expect(data.intent).toBeUndefined();
+      expect(data.candidates).toBeUndefined();
+      expect(data.pageContent).toBe(fullAccessibilityTree);
+    });
+
+    it('semantic no-match safely returns empty candidates and guidance without throwing', async () => {
+      const mockElements = [
+        { ref: 'ref_1', role: 'button', name: 'Submit Application', context: 'Form actions' },
+      ];
+
+      (readPageTool as any).sendMessageToTab = vi.fn().mockResolvedValue({
+        success: true,
+        pageContent: 'tree',
+        actionableElements: mockElements,
+        viewport: { width: 1280, height: 720, dpr: 1 },
+        domRevision: 1,
+      });
+
+      const res = await readPageTool.execute({ intent: 'order pepperoni pizza with extra cheese' });
+      expect(res.isError).toBe(false);
+      const data = JSON.parse((res.content[0] as any).text);
+
+      expect(data.success).toBe(true);
+      expect(data.candidates.length).toBe(0);
+      expect(data.topCandidate).toBeNull();
+      expect(data.pageContent).toContain('No actionable element candidates matched the intent');
+      expect(data.pageContent).toContain('chrome_read_page');
+      expect(data.tips).toContain('No candidates matched the intent');
+    });
+
+    it('safely handles tree failure via fallback to interactive elements helper', async () => {
+      (readPageTool as any).sendMessageToTab = vi.fn().mockImplementation(async (_tabId, msg) => {
+        if (msg.action === 'generateAccessibilityTree') {
+          return { success: false, error: 'Tree generation failed' };
+        }
+        if (msg.action === 'getInteractiveElements') {
+          return {
+            success: true,
+            elements: [
+              { ref: 'ref_fb_1', type: 'button', text: 'Confirm Order', selector: '#confirm-btn' },
+            ],
+          };
+        }
+        return null;
+      });
+
+      const res = await readPageTool.execute({ intent: 'confirm order' });
+      expect(res.isError).toBe(false);
+      const data = JSON.parse((res.content[0] as any).text);
+
+      expect(data.success).toBe(true);
+      expect(data.fallbackUsed).toBe(true);
+      expect(data.fallbackSource).toBe('get_interactive_elements');
+      expect(data.candidates.length).toBeGreaterThan(0);
+      expect(data.topCandidate?.ref).toBe('ref_fb_1');
     });
   });
 });
