@@ -23,11 +23,11 @@ const CONCEPT_MAPPINGS: Record<string, string[]> = {
     '激活', '开启', '启动', '有効化', '起動',
   ],
   SUBMIT: [
-    'submit', 'submitting', 'submission', 'send', 'confirm', 'apply', 'authorize', 'authorise',
-    'dispatch', 'commit', 'post', 'execute', 'senden', 'absenden', 'bestätigen', 'autorisieren',
-    'soumettre', 'envoyer', 'confirmer', 'autoriser', 'valider', 'enviar', 'confirmar',
-    'autorizar', 'validar', 'отправить', 'подтвердить', '提交', '确认', '授权', '发布',
-    '送信', '確定', '承認',
+    'submit', 'submitting', 'submission', 'send', 'confirm', 'apply',
+    'commit', 'post', 'execute', 'senden', 'absenden', 'bestätigen',
+    'soumettre', 'envoyer', 'confirmer', 'valider', 'enviar', 'confirmar',
+    'validar', 'отправить', 'подтвердить', '提交', '确认', '发布',
+    '送信', '確定',
   ],
   SEARCH: [
     'search', 'searching', 'find', 'filter', 'filtering', 'query', 'lookup',
@@ -58,51 +58,16 @@ const CONCEPT_MAPPINGS: Record<string, string[]> = {
     'удалить', 'стереть', '删除', '移除', '削除',
   ],
   NAVIGATE: [
-    'navigate', 'go', 'visit', 'open', 'browse', 'link', 'next', 'previous', 'back', 'forward',
+    'navigate', 'go', 'visit', 'open', 'browse', 'next', 'previous', 'back', 'forward',
     'gehen', 'öffnen', 'weiter', 'zurück', 'naviguer', 'aller', 'ouvrir', 'suivant', 'précédent',
     'navegar', 'ir', 'abrir', 'siguiente', 'anterior', 'перейти', 'открыть', 'следующий', 'назад',
     '导航', '前往', '打开', '下一步', '上一页', '次へ', '戻る',
   ],
   INPUT: [
-    'input', 'enter', 'type', 'write', 'fill', 'value', 'text',
-    'eingeben', 'tippen', 'schreiben', 'wert', 'entrer', 'saisir', 'écrire', 'texte',
-    'ingresar', 'escribir', 'escribe', 'texto', 'ввести', 'напечатать', 'текст',
-    '输入', '填写', '写入', 'テキスト', '入力',
-  ],
-  STATUS: [
-    'status', 'state', 'condition', 'mode', 'operational',
-    'zustand', 'status', 'état', 'statut', 'estado', 'статус', 'состояние',
-    '状态', '状態',
-  ],
-  PRIMARY: [
-    'primary', 'main', 'master', 'default',
-    'primär', 'haupt', 'primaire', 'principal', 'primario',
-    'главный', 'основной', '主要', '主', 'プライマリ', 'メイン',
-  ],
-  SERVICE: [
-    'service', 'server', 'daemon', 'app',
-    'dienst', 'serveur', 'servicio', 'servidor', 'сервис', 'служба',
-    '服务', 'サービス',
-  ],
-  CLUSTER: [
-    'cluster', 'orchestrator', 'node', 'nodes', 'instance',
-    'knoten', 'nœud', 'nodo', 'кластер', 'узел',
-    '集群', '节点', 'クラスター',
-  ],
-  ALLOCATION: [
-    'allocation', 'allocate', 'allot', 'quota', 'capacity',
-    'zuweisung', 'zuteilung', 'affectation', 'asignación',
-    'выделение', 'распределение', '分配', '配分',
-  ],
-  DISPATCH: [
-    'dispatch', 'shipment', 'fulfillment', 'transfer', 'transport', 'carrier', 'delivery',
-    'versand', 'lieferung', 'spedition', 'expédition', 'livraison', 'despacho', 'envío',
-    'отправка', 'доставка', '调度', '发货', '物流', '配送',
-  ],
-  CODE: [
-    'code', 'token', 'key', 'auth', 'secret', 'id', 'identifier',
-    'schlüssel', 'token', 'kennzeichen', 'clé', 'jeton', 'clave', 'código',
-    'код', 'токен', 'ключ', '代码', '令牌', '密钥', 'コード', 'トークン',
+    'input', 'enter', 'type', 'write', 'fill', 'textbox',
+    'eingeben', 'tippen', 'schreiben', 'ausfüllen', 'entrer', 'saisir', 'écrire', 'remplir',
+    'ingresar', 'escribir', 'escribe', 'rellenar', 'ввести', 'напечатать', 'заполнить',
+    '输入', '填写', '写入', '記入', '入力',
   ],
 };
 
@@ -202,31 +167,35 @@ export function embedText(text: string, dim: number = EMBEDDING_DIMENSION): Floa
     }
   }
 
-  // Concept dimensions allocated in top partition
+  // 1. Concept dimensions allocated in dedicated partition (0 .. NUM_CONCEPTS - 1)
+  const NUM_CONCEPTS = Object.keys(CONCEPT_MAPPINGS).length;
+  const NUM_ROLE_DIMS = 3;
+  const HASH_START = NUM_CONCEPTS;
+  const HASH_RANGE = Math.max(1, dim - NUM_CONCEPTS - NUM_ROLE_DIMS);
+
   let conceptIdx = 0;
   for (const conceptKey of Object.keys(CONCEPT_MAPPINGS)) {
-    const targetDim = conceptIdx % Math.floor(dim / 4);
     if (matchedConcepts.has(conceptKey)) {
-      vec[targetDim] += 3.0;
+      vec[conceptIdx] += 6.0;
     }
     conceptIdx++;
   }
 
-  // 2. Token hashing (word-level features)
+  // 2. Token hashing (word-level features) in dedicated partition
   for (const token of tokens) {
     const h = fnv1a(token);
-    const targetIdx = h % dim;
+    const targetIdx = HASH_START + (h % HASH_RANGE);
     const sign = (h & 1) === 0 ? 1 : -1;
     vec[targetIdx] += sign * 1.5;
   }
 
-  // 3. Subword character 3-grams & 4-grams (morphology & typo resilience)
+  // 3. Subword character 3-grams & 4-grams (morphology & typo resilience) in dedicated partition
   for (const token of tokens) {
     if (token.length >= 3) {
       for (let i = 0; i <= token.length - 3; i++) {
         const trigram = token.substring(i, i + 3);
         const h = fnv1a(trigram);
-        const idx = h % dim;
+        const idx = HASH_START + (h % HASH_RANGE);
         const sign = (h & 1) === 0 ? 1 : -1;
         vec[idx] += sign * 0.6;
       }
@@ -235,21 +204,21 @@ export function embedText(text: string, dim: number = EMBEDDING_DIMENSION): Floa
       for (let i = 0; i <= token.length - 4; i++) {
         const fourgram = token.substring(i, i + 4);
         const h = fnv1a(fourgram);
-        const idx = h % dim;
+        const idx = HASH_START + (h % HASH_RANGE);
         const sign = (h & 1) === 0 ? 1 : -1;
         vec[idx] += sign * 0.4;
       }
     }
   }
 
-  // 4. Role alignment features
+  // 4. Role alignment features (dim - 3 .. dim - 1)
   if (/\b(click|press|tap|button|activate|submit|link)\b/i.test(norm)) {
     vec[dim - 1] += 2.0;
   }
-  if (/\b(enter|type|input|write|fill|field|box)\b/i.test(norm)) {
+  if (/\b(enter|type|input|write|fill|field|box|textbox)\b/i.test(norm)) {
     vec[dim - 2] += 2.0;
   }
-  if (/\b(select|choose|pick|dropdown|option)\b/i.test(norm)) {
+  if (/\b(select|choose|pick|dropdown|option|combobox)\b/i.test(norm)) {
     vec[dim - 3] += 2.0;
   }
 
@@ -427,11 +396,12 @@ export function rankActionableElements(
     // lexical overlap and exact phrase matches provide confidence boost.
     let combinedScore = cosScore;
     if (lexicalScore > 0) {
-      combinedScore = Math.max(combinedScore, cosScore * 0.6 + lexicalScore * 0.4);
+      combinedScore += lexicalScore * 0.25;
     }
     if (exactPhraseMatch > 0) {
-      combinedScore = Math.min(1.0, combinedScore + exactPhraseMatch);
+      combinedScore += exactPhraseMatch;
     }
+    combinedScore = Math.min(1.0, combinedScore);
 
     const roundedScore = Math.round(combinedScore * 100) / 100;
 

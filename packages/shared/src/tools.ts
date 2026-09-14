@@ -252,7 +252,7 @@ export const TOOL_SCHEMAS: Tool[] = [
         intent: {
           type: 'string',
           description:
-            'Natural-language interaction intent (e.g., "activate primary service", "search cluster", "submit allocation"). When provided, semantically ranks actionable UI elements and returns a compact Top-N candidate set with existing refs.',
+            'Natural-language interaction intent (e.g., "click submit button", "search products", "confirm checkout"). When provided, semantically ranks actionable UI elements and returns a compact Top-N candidate set with existing refs.',
         },
         maxCandidates: {
           type: 'number',
@@ -266,7 +266,7 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.GET_ACTIONABLE_CANDIDATES,
     description:
-      'Semantically retrieve and rank actionable UI element candidates matching a natural-language interaction intent (e.g., "activate the primary service", "search cluster", "submit allocation"). Returns a compact Top-N candidate set with existing refs (e.g., "ref_1") so the main LLM can choose the target and execute actions via chrome_computer or chrome_click_element/chrome_fill_or_select without inspecting full page trees.',
+      'Semantically retrieve and rank actionable UI element candidates matching a natural-language interaction intent (e.g., "click submit button", "search products", "confirm checkout"). Returns a compact Top-N candidate set with existing refs (e.g., "ref_1") so the main LLM can choose the target and execute actions via chrome_computer or chrome_click_element/chrome_fill_or_select without inspecting full page trees.',
     inputSchema: {
       type: 'object',
       properties: {

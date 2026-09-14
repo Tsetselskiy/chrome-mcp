@@ -274,6 +274,8 @@ export class BenchmarkMetricsCollector {
           : args.code;
     }
     if (args.filter) summary.filter = args.filter;
+    if (args.intent !== undefined) summary.intent = args.intent;
+    if (args.maxCandidates !== undefined) summary.maxCandidates = args.maxCandidates;
     return summary;
   }
 }
