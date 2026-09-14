@@ -1,0 +1,209 @@
+{
+  "scenario": "short-interaction",
+  "taskSuccess": true,
+  "failureReason": null,
+  "totalMcpCalls": 5,
+  "lowLevelJsCalls": 0,
+  "mcpRoundTripTimeMs": 929.02,
+  "browserExecutionTimeMs": null,
+  "wallClockDurationMs": 2265.84,
+  "pageInspectionCalls": 2,
+  "repeatedPageInspections": 0,
+  "retries": 0,
+  "toolBreakdown": {
+    "get_windows_and_tabs": 1,
+    "chrome_navigate": 1,
+    "chrome_read_page": 2,
+    "chrome_click_element": 1
+  },
+  "metadata": {},
+  "events": [
+    {
+      "index": 1,
+      "timestamp": "2026-09-14T10:48:46.114Z",
+      "name": "get_windows_and_tabs",
+      "argsSummary": {},
+      "scopeKey": "default",
+      "durationMs": 18.09,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "windowCount",
+          "tabCount",
+          "mcpGroup",
+          "windows"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 2,
+      "timestamp": "2026-09-14T10:48:46.156Z",
+      "name": "chrome_navigate",
+      "argsSummary": {
+        "url": "http://localhost:12399/short/index.html",
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 28.45,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "tabId",
+          "windowId",
+          "url"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 3,
+      "timestamp": "2026-09-14T10:48:46.790Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 20.69,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-14T10:48:47.630Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "selector": "#activate-btn",
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 830.89,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 5,
+      "timestamp": "2026-09-14T10:48:48.285Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 30.9,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    }
+  ],
+  "benchmarkLayer": "agent-task-level",
+  "taskDefinition": {
+    "id": "short-interaction",
+    "name": "Short Interaction: Service Activation",
+    "category": "short-interaction",
+    "prompt": "Navigate to the CloudOps Console at http://localhost:12399/short/index.html and activate the primary service. Confirm that the status changes to ACTIVE."
+  },
+  "agentMetadata": {
+    "model": "Gemini 3.8 Flash High",
+    "reasoningMode": "High",
+    "environment": {
+      "proxyPort": 12308,
+      "targetMcpUrl": "http://127.0.0.1:12307/mcp",
+      "nodeVersion": "v22.23.2",
+      "platform": "win32"
+    },
+    "condition": "BEFORE",
+    "sourceSha": "b846235b747920d07baad2312af4525da7745383",
+    "chromeVersion": "152.0.7977.83",
+    "os": "win32 x64"
+  }
+}

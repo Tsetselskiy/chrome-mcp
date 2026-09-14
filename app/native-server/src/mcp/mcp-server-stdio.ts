@@ -53,16 +53,26 @@ export const getStdioMcpServer = () => {
   return stdioMcpServer;
 };
 
+let currentConfigUrl: string | null = null;
+
 export const ensureMcpClient = async () => {
   try {
-    if (mcpClient) {
+    const config = loadConfig();
+    if (mcpClient && currentConfigUrl === config.url) {
       const pingResult = await mcpClient.ping();
       if (pingResult) {
         return mcpClient;
       }
     }
 
-    const config = loadConfig();
+    if (mcpClient) {
+      try {
+        await mcpClient.close();
+      } catch {}
+      mcpClient = null;
+    }
+
+    currentConfigUrl = config.url;
     mcpClient = new Client({ name: 'Mcp Chrome Proxy', version: '1.0.0' }, { capabilities: {} });
     const transport = new StreamableHTTPClientTransport(new URL(config.url), {});
     await mcpClient.connect(transport);
@@ -70,6 +80,7 @@ export const ensureMcpClient = async () => {
   } catch (error) {
     mcpClient?.close();
     mcpClient = null;
+    currentConfigUrl = null;
     console.error('Failed to connect to MCP server:', error);
   }
 };

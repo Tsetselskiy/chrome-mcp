@@ -186,8 +186,8 @@ export interface ActionableCandidate {
 
 export interface ActionableElementSummary {
   ref: string;
-  role: string;
-  name: string;
+  role?: string;
+  name?: string;
   ariaLabel?: string;
   href?: string | null;
   placeholder?: string | null;

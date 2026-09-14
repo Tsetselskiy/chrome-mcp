@@ -84,6 +84,7 @@ export class AgentBenchmarkRecorder {
     this.proxyPort = options.proxyPort || parseInt(process.env.RECORDER_PORT || '12308', 10);
     this.targetMcpUrl = options.targetMcpUrl || process.env.MCP_URL || 'http://127.0.0.1:12307/mcp';
     this.fixturePort = options.fixturePort || parseInt(process.env.BENCHMARK_PORT || '12399', 10);
+    this.resultsDir = options.resultsDir || process.env.BENCHMARK_RESULTS_DIR || RESULTS_DIR;
     this.taskId = options.taskId || 'short-interaction';
     this.task = getTaskById(this.taskId) || AGENT_BENCHMARK_TASKS[0];
     this.collector = new BenchmarkMetricsCollector(this.task.id, { autoClassifyJsQueries: true });
@@ -167,10 +168,11 @@ export class AgentBenchmarkRecorder {
       ...agentMetadata,
     };
 
-    if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
+    const targetResultsDir = this.resultsDir;
+    if (!fs.existsSync(targetResultsDir)) fs.mkdirSync(targetResultsDir, { recursive: true });
 
     const timestampStr = new Date().toISOString().replace(/[:.]/g, '-');
-    const outFile = path.join(RESULTS_DIR, `agent-${this.task.id}-${timestampStr}.json`);
+    const outFile = path.join(targetResultsDir, `agent-${this.task.id}-${timestampStr}.json`);
     fs.writeFileSync(outFile, JSON.stringify(summary, null, 2), 'utf-8');
 
     return { summary, outFile, verification };
@@ -366,6 +368,10 @@ if (process.argv[1] === __filename) {
   let taskId = 'short-interaction';
   let model = process.env.AGENT_MODEL || 'unspecified';
   let reasoningMode = process.env.AGENT_REASONING_MODE || 'unspecified';
+  let resultsDir = process.env.BENCHMARK_RESULTS_DIR || RESULTS_DIR;
+  let condition = process.env.BENCHMARK_CONDITION || 'unspecified';
+  let sourceSha = process.env.BENCHMARK_SOURCE_SHA || 'unspecified';
+  let chromeVersion = process.env.BENCHMARK_CHROME_VERSION || '152.0.7977.83';
 
   const taskIndex = args.indexOf('--task');
   if (taskIndex !== -1 && args[taskIndex + 1]) taskId = args[taskIndex + 1];
@@ -373,17 +379,29 @@ if (process.argv[1] === __filename) {
   if (modelIndex !== -1 && args[modelIndex + 1]) model = args[modelIndex + 1];
   const reasoningIndex = args.indexOf('--reasoning-mode');
   if (reasoningIndex !== -1 && args[reasoningIndex + 1]) reasoningMode = args[reasoningIndex + 1];
+  const outDirIndex = args.indexOf('--out-dir');
+  if (outDirIndex !== -1 && args[outDirIndex + 1]) resultsDir = args[outDirIndex + 1];
+  const conditionIndex = args.indexOf('--condition');
+  if (conditionIndex !== -1 && args[conditionIndex + 1]) condition = args[conditionIndex + 1];
+  const shaIndex = args.indexOf('--source-sha');
+  if (shaIndex !== -1 && args[shaIndex + 1]) sourceSha = args[shaIndex + 1];
+  const chromeIndex = args.indexOf('--chrome-version');
+  if (chromeIndex !== -1 && args[chromeIndex + 1]) chromeVersion = args[chromeIndex + 1];
 
-  const recorder = new AgentBenchmarkRecorder({ taskId });
+  const recorder = new AgentBenchmarkRecorder({ taskId, resultsDir });
   console.log('='.repeat(72));
   console.log(' Agent-Level Benchmark Recorder (Issue #1)');
   console.log('='.repeat(72));
-  console.log(` Task ID:     ${recorder.task.id}`);
-  console.log(` Task Name:   ${recorder.task.name}`);
-  console.log(` Model:       ${model}`);
-  console.log(` Reasoning:   ${reasoningMode}`);
-  console.log(` Target MCP:  ${recorder.targetMcpUrl}`);
-  console.log(` Proxy Port:  ${recorder.proxyPort}`);
+  console.log(` Task ID:        ${recorder.task.id}`);
+  console.log(` Task Name:      ${recorder.task.name}`);
+  console.log(` Condition:      ${condition}`);
+  console.log(` Source SHA:     ${sourceSha}`);
+  console.log(` Model:          ${model}`);
+  console.log(` Reasoning:      ${reasoningMode}`);
+  console.log(` Chrome Version: ${chromeVersion}`);
+  console.log(` Target MCP:     ${recorder.targetMcpUrl}`);
+  console.log(` Proxy Port:     ${recorder.proxyPort}`);
+  console.log(` Output Dir:     ${resultsDir}`);
   console.log('-'.repeat(72));
   console.log(` PROMPT FOR AGENT:\n"${recorder.task.prompt}"\n`);
   console.log('-'.repeat(72));
@@ -402,6 +420,10 @@ if (process.argv[1] === __filename) {
         const { summary, outFile, verification } = await recorder.verifyAndFinalize({
           model,
           reasoningMode,
+          condition,
+          sourceSha,
+          chromeVersion,
+          os: `${process.platform} ${process.arch}`,
         });
         await recorder.stop();
         rl.close();

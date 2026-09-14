@@ -1,0 +1,299 @@
+{
+  "scenario": "dynamic-multistep-interaction",
+  "taskSuccess": true,
+  "failureReason": null,
+  "totalMcpCalls": 8,
+  "lowLevelJsCalls": 0,
+  "mcpRoundTripTimeMs": 2244.18,
+  "browserExecutionTimeMs": null,
+  "wallClockDurationMs": 4951.16,
+  "pageInspectionCalls": 3,
+  "repeatedPageInspections": 0,
+  "retries": 0,
+  "toolBreakdown": {
+    "chrome_navigate": 1,
+    "chrome_get_actionable_candidates": 3,
+    "chrome_fill_or_select": 2,
+    "chrome_click_element": 2
+  },
+  "metadata": {},
+  "events": [
+    {
+      "index": 1,
+      "timestamp": "2026-09-14T10:58:36.895Z",
+      "name": "chrome_navigate",
+      "argsSummary": {
+        "url": "http://localhost:12399/dynamic/index.html",
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 27.44,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "tabId",
+          "windowId",
+          "url"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 2,
+      "timestamp": "2026-09-14T10:58:37.539Z",
+      "name": "chrome_get_actionable_candidates",
+      "argsSummary": {
+        "tabId": 2022050410,
+        "intent": "search cluster",
+        "maxCandidates": 3
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 23.69,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
+          "pageContent",
+          "isStale",
+          "domRevision",
+          "viewport"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 3,
+      "timestamp": "2026-09-14T10:58:37.677Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_5",
+        "tabId": 2022050410,
+        "value": "us-east"
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 129.82,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-14T10:58:38.142Z",
+      "name": "chrome_get_actionable_candidates",
+      "argsSummary": {
+        "tabId": 2022050410,
+        "intent": "select US-East Production Primary cluster",
+        "maxCandidates": 3
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 34.37,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
+          "pageContent",
+          "isStale",
+          "domRevision",
+          "viewport"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 5,
+      "timestamp": "2026-09-14T10:58:38.935Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_10",
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 783.38,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 6,
+      "timestamp": "2026-09-14T10:58:39.695Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "selector": "#node-count",
+        "tabId": 2022050410,
+        "value": 8
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 130.51,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-14T10:58:41.108Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "selector": "#submit-allocation-btn",
+        "tabId": 2022050410
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 1092.2,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 8,
+      "timestamp": "2026-09-14T10:58:41.750Z",
+      "name": "chrome_get_actionable_candidates",
+      "argsSummary": {
+        "tabId": 2022050410,
+        "intent": "allocation status",
+        "maxCandidates": 3
+      },
+      "scopeKey": "tab:2022050410",
+      "durationMs": 22.77,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
+          "pageContent",
+          "isStale",
+          "domRevision",
+          "viewport"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    }
+  ],
+  "benchmarkLayer": "agent-task-level",
+  "taskDefinition": {
+    "id": "dynamic-multistep-interaction",
+    "name": "Dynamic Multi-Step Interaction: Cluster Allocation",
+    "category": "dynamic-multistep",
+    "prompt": "Navigate to the Cluster Orchestrator at http://localhost:12399/dynamic/index.html. Search for cluster \"us-east\", select the \"US-East Production Primary\" cluster from the dynamically filtered results, set the allocation node count to 8, and submit the allocation. Confirm that allocation reference ALLOC-8891 is displayed."
+  },
+  "agentMetadata": {
+    "model": "Gemini 3.8 Flash High",
+    "reasoningMode": "High",
+    "environment": {
+      "proxyPort": 12308,
+      "targetMcpUrl": "http://127.0.0.1:12307/mcp",
+      "nodeVersion": "v22.23.2",
+      "platform": "win32"
+    },
+    "condition": "AFTER",
+    "sourceSha": "5f5d5ae08cbf9d218b99a8348547f970b1f9cb01",
+    "chromeVersion": "152.0.7977.83",
+    "os": "win32 x64"
+  }
+}
