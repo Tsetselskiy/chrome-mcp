@@ -1,3 +1,12 @@
+/**
+ * SCRIPTED / NON-AGENT REGRESSION TOOLING (Issue #2)
+ *
+ * NOTE: This suite executes programmed, hardcoded tool-call sequences for
+ * deterministic regression testing. It does NOT represent agent-selected
+ * tool calls and is NOT valid agent-task-level benchmark evidence.
+ * Real agent benchmark runs must be driven by independent LLM subagents.
+ */
+
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';

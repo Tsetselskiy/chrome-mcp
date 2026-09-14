@@ -128,6 +128,29 @@ export class AgentBenchmarkRecorder {
     };
   }
 
+  async resetBrowserTab() {
+    try {
+      if (!this.mcpClient) {
+        this.mcpClient = new BenchmarkMcpClient({ url: this.targetMcpUrl });
+        await this.mcpClient.connect();
+      }
+      const tabsRes = await this.mcpClient.callTool('get_windows_and_tabs');
+      if (tabsRes?.ok && tabsRes?.data?.windows && tabsRes.data.windows[0]?.tabs) {
+        const activeTab = tabsRes.data.windows[0].tabs.find((t) => t.active);
+        const tabId = activeTab ? activeTab.tabId : tabsRes.data.windows[0].tabs[0].tabId;
+        if (tabId) {
+          await this.mcpClient.callTool('chrome_navigate', { url: 'about:blank', tabId });
+          await new Promise((r) => setTimeout(r, 400));
+          this.activeTabId = tabId;
+          return tabId;
+        }
+      }
+    } catch (err) {
+      console.warn(`[Recorder] Tab reset notice: ${err.message}`);
+    }
+    return null;
+  }
+
   async stop() {
     this.isRecording = false;
     if (this.server) {
@@ -265,10 +288,80 @@ export class AgentBenchmarkRecorder {
 
   async _handleProxyRequest(clientReq, clientRes) {
     const targetUrl = new URL(clientReq.url || '/mcp', this.targetMcpUrl);
+    const reqUrl = new URL(clientReq.url || '/mcp', `http://127.0.0.1:${this.proxyPort}`);
 
-    if (clientReq.url?.endsWith('/ping')) {
+    if (reqUrl.pathname.endsWith('/ping')) {
       clientRes.writeHead(200, { 'Content-Type': 'application/json' });
-      clientRes.end(JSON.stringify({ status: 'ok', recorder: true, task: this.task.id }));
+      clientRes.end(JSON.stringify({ status: 'ok', recorder: true, task: this.task?.id }));
+      return;
+    }
+
+    if (reqUrl.pathname.endsWith('/session/start')) {
+      const taskId = reqUrl.searchParams.get('taskId') || 'short-interaction';
+      const condition = reqUrl.searchParams.get('condition') || 'unspecified';
+      const sourceSha = reqUrl.searchParams.get('sourceSha') || 'unspecified';
+      const runIndex = reqUrl.searchParams.get('runIndex') || '1';
+      const outDir = reqUrl.searchParams.get('outDir') || (condition.toUpperCase() === 'BEFORE' ? path.join(RESULTS_DIR, 'issue-2-ab', 'before') : path.join(RESULTS_DIR, 'issue-2-ab', 'after'));
+
+      await this.resetBrowserTab();
+      this.taskId = taskId;
+      this.task = getTaskById(taskId) || AGENT_BENCHMARK_TASKS[0];
+      this.currentCondition = condition;
+      this.currentSourceSha = sourceSha;
+      this.currentRunIndex = runIndex;
+      this.resultsDir = outDir;
+      this.collector = new BenchmarkMetricsCollector(this.task.id, { autoClassifyJsQueries: true });
+      this.collector.start();
+      this.failedCallSignatures = new Set();
+      this.isRecording = true;
+
+      console.log('\n========================================================================');
+      console.log(`[Session Started] Task: ${taskId} | Condition: ${condition} | Run: ${runIndex}`);
+      console.log(`Source SHA: ${sourceSha} | Model: Gemini 3.8 Flash High`);
+      console.log(`Prompt: "${this.task.prompt}"`);
+      console.log('========================================================================\n');
+
+      clientRes.writeHead(200, { 'Content-Type': 'application/json' });
+      clientRes.end(JSON.stringify({
+        ok: true,
+        message: 'Session started',
+        taskId: this.task.id,
+        condition,
+        sourceSha,
+        runIndex,
+        prompt: this.task.prompt,
+      }));
+      return;
+    }
+
+    if (reqUrl.pathname.endsWith('/session/finalize')) {
+      const model = reqUrl.searchParams.get('model') || 'Gemini 3.8 Flash High';
+      const reasoningMode = reqUrl.searchParams.get('reasoningMode') || 'High';
+      const finalizeResult = await this.verifyAndFinalize({
+        model,
+        reasoningMode,
+        condition: this.currentCondition || 'unspecified',
+        sourceSha: this.currentSourceSha || 'unspecified',
+        chromeVersion: '152.0.7977.83',
+        os: `${process.platform} ${process.arch}`,
+        runIndex: this.currentRunIndex || '1',
+      });
+
+      console.log('\n========================================================================');
+      console.log(`[Session Finalized] Task: ${this.taskId} | Verification: ${finalizeResult.verification.success ? 'PASSED OK' : 'FAILED'}`);
+      console.log(`Total MCP Calls: ${finalizeResult.summary.totalMcpCalls} | Inspections: ${finalizeResult.summary.pageInspectionCalls} | Repeated: ${finalizeResult.summary.repeatedPageInspections}`);
+      console.log(`Trace: ${finalizeResult.outFile}`);
+      console.log('========================================================================\n');
+
+      await this.resetBrowserTab();
+
+      clientRes.writeHead(200, { 'Content-Type': 'application/json' });
+      clientRes.end(JSON.stringify({
+        ok: true,
+        summary: finalizeResult.summary,
+        verification: finalizeResult.verification,
+        outFile: finalizeResult.outFile,
+      }));
       return;
     }
 
@@ -388,6 +481,7 @@ if (process.argv[1] === __filename) {
   const chromeIndex = args.indexOf('--chrome-version');
   if (chromeIndex !== -1 && args[chromeIndex + 1]) chromeVersion = args[chromeIndex + 1];
 
+  const isServer = args.includes('--server') || args.includes('--daemon');
   const recorder = new AgentBenchmarkRecorder({ taskId, resultsDir });
   console.log('='.repeat(72));
   console.log(' Agent-Level Benchmark Recorder (Issue #1)');
@@ -413,6 +507,11 @@ if (process.argv[1] === __filename) {
       console.log(` ✓ Fixtures hosted at: ${fixtureBaseUrl}`);
       console.log('\nPoint your LLM agent to the Proxy URL above and provide the prompt.');
       console.log('Press [ENTER] in this terminal when the agent has completed the task...\n');
+
+      if (isServer) {
+        console.log('[Server Mode] Recorder is listening for sessions at /session/start and /session/finalize.');
+        return;
+      }
 
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
       rl.question('', async () => {

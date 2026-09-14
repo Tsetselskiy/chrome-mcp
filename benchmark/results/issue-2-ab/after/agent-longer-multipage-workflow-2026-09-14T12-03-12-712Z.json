@@ -1,0 +1,339 @@
+{
+  "scenario": "longer-multipage-workflow",
+  "taskSuccess": true,
+  "failureReason": null,
+  "totalMcpCalls": 9,
+  "lowLevelJsCalls": 0,
+  "mcpRoundTripTimeMs": 8253.32,
+  "browserExecutionTimeMs": null,
+  "wallClockDurationMs": 51344.31,
+  "pageInspectionCalls": 3,
+  "repeatedPageInspections": 0,
+  "retries": 0,
+  "toolBreakdown": {
+    "get_windows_and_tabs": 1,
+    "chrome_navigate": 1,
+    "chrome_read_page": 3,
+    "chrome_click_element": 2,
+    "chrome_fill_or_select": 2
+  },
+  "metadata": {},
+  "events": [
+    {
+      "index": 1,
+      "timestamp": "2026-09-14T12:02:43.529Z",
+      "name": "get_windows_and_tabs",
+      "argsSummary": {},
+      "scopeKey": "tab:2022050427",
+      "durationMs": 13.09,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "windowCount",
+          "tabCount",
+          "mcpGroup",
+          "windows"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 2,
+      "timestamp": "2026-09-14T12:02:45.371Z",
+      "name": "chrome_navigate",
+      "argsSummary": {
+        "url": "http://localhost:12399/multihop/site-a.html",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 26.98,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "tabId",
+          "windowId",
+          "url"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 3,
+      "timestamp": "2026-09-14T12:02:47.292Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 22.74,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-14T12:02:53.130Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_23",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 4025.56,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 5,
+      "timestamp": "2026-09-14T12:02:54.261Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 7.17,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 6,
+      "timestamp": "2026-09-14T12:02:56.105Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_13",
+        "tabId": 2022050429,
+        "value": "SHP-88301"
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 430.1,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-14T12:02:58.105Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_16",
+        "tabId": 2022050429,
+        "value": "BENCHMARK-CODE-9204"
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 524.81,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 8,
+      "timestamp": "2026-09-14T12:03:04.111Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_17",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 3184.63,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 9,
+      "timestamp": "2026-09-14T12:03:05.794Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 18.24,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    }
+  ],
+  "benchmarkLayer": "agent-task-level",
+  "taskDefinition": {
+    "id": "longer-multipage-workflow",
+    "name": "Longer Multi-Page Workflow: Dispatch & Gateway Authorization",
+    "category": "longer-multipage",
+    "prompt": "Navigate to the Origin Hub dispatch manifest at http://localhost:12399/multihop/site-a.html. Find the transfer auth token and shipment ID. Then proceed to the Fulfillment Gateway at http://localhost:12399/multihop/site-b.html, enter both the shipment ID and transfer auth token into the authorization form, and authorize the dispatch. Confirm that authorization code DISPATCHED-OK-2026 is displayed."
+  },
+  "agentMetadata": {
+    "model": "Gemini 3.8 Flash High",
+    "reasoningMode": "High",
+    "environment": {
+      "proxyPort": 12308,
+      "targetMcpUrl": "http://127.0.0.1:12307/mcp",
+      "nodeVersion": "v22.23.2",
+      "platform": "win32"
+    },
+    "condition": "AFTER",
+    "sourceSha": "f42a9db",
+    "chromeVersion": "152.0.7977.83",
+    "os": "win32 x64",
+    "runIndex": "1"
+  }
+}
