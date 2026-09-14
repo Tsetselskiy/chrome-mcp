@@ -41,9 +41,10 @@ if (window.__CLICK_HELPER_INITIALIZED__) {
           // ignore
         }
 
-        if (!target || !(target instanceof Element)) {
+        if (!target || !(target instanceof Element) || target.isConnected === false) {
           return {
-            error: `Element ref "${ref}" not found. Please call chrome_read_page first and ensure the ref is still valid.`,
+            error: `Element ref "${ref}" not found or is stale/disconnected from DOM. Please call chrome_read_page or chrome_get_actionable_candidates to get fresh refs.`,
+            stale: true,
           };
         }
 

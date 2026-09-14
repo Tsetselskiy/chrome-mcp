@@ -163,3 +163,50 @@ export interface ElementPickerResult {
    */
   results: ElementPickerResultItem[];
 }
+
+// ============================================================
+// Semantic Action Retrieval Types (Issue #2)
+// ============================================================
+
+export interface ActionableCandidate {
+  ref: string;
+  role: string;
+  name: string;
+  score: number;
+  ariaLabel?: string;
+  href?: string | null;
+  placeholder?: string | null;
+  type?: string | null;
+  context?: string | null;
+  descriptor: string;
+  selector?: string;
+  coordinates?: { x: number; y: number };
+  disabled?: boolean;
+}
+
+export interface ActionableElementSummary {
+  ref: string;
+  role: string;
+  name: string;
+  ariaLabel?: string;
+  href?: string | null;
+  placeholder?: string | null;
+  type?: string | null;
+  context?: string | null;
+  descriptor?: string;
+  selector?: string;
+  coordinates?: { x: number; y: number };
+  disabled?: boolean;
+}
+
+export interface SemanticRetrievalResult {
+  success: boolean;
+  query: string;
+  totalCandidatesConsidered: number;
+  returnedCandidatesCount: number;
+  candidates: ActionableCandidate[];
+  topCandidate: ActionableCandidate | null;
+  isStale?: boolean;
+  domRevision?: number;
+  message?: string;
+}

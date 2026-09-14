@@ -17,6 +17,7 @@ export const INSPECTION_TOOL_NAMES = [
   'chrome_get_interactive_elements',
   'search_tabs_content',
   'chrome_console',
+  'chrome_get_actionable_candidates',
 ];
 
 export const LOW_LEVEL_JS_TOOLS = [

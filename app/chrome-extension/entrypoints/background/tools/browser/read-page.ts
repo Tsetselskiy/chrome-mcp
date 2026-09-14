@@ -1,6 +1,12 @@
 import { createErrorResponse, ToolResult } from '@/common/tool-handler';
 import { BaseBrowserToolExecutor } from '../base-browser';
-import { TOOL_NAMES } from 'agent-chrome-mcp-shared';
+import {
+  TOOL_NAMES,
+  globalActionCache,
+  rankActionableElements,
+  formatCandidatesAsContent,
+  type ActionableCandidate,
+} from 'agent-chrome-mcp-shared';
 import { TOOL_MESSAGE_TYPES } from '@/common/message-types';
 import { ERROR_MESSAGES } from '@/common/constants';
 import { listMarkersForUrl } from '@/entrypoints/background/element-marker/element-marker-storage';
@@ -17,6 +23,8 @@ interface ReadPageParams {
   refId?: string; // focus on subtree rooted at this refId
   tabId?: number; // target existing tab id
   windowId?: number; // when no tabId, pick active tab from this window
+  intent?: string; // natural-language interaction intent for semantic retrieval
+  maxCandidates?: number; // maximum candidates to return when intent is provided (default: 5)
 }
 
 class ReadPageTool extends BaseBrowserToolExecutor {
@@ -151,6 +159,60 @@ class ReadPageTool extends BaseBrowserToolExecutor {
         fallbackSource: null,
         reason: null,
       };
+
+      // If natural-language interaction intent is provided, perform semantic action retrieval
+      if (args?.intent && typeof args.intent === 'string' && args.intent.trim()) {
+        const intent = args.intent.trim();
+        const maxCandidates =
+          args.maxCandidates !== undefined &&
+          Number.isInteger(Number(args.maxCandidates)) &&
+          Number(args.maxCandidates) > 0
+            ? Number(args.maxCandidates)
+            : 5;
+        const domRevision = Number(resp?.domRevision || 1);
+        const elements = Array.isArray(resp?.actionableElements)
+          ? resp.actionableElements
+          : Array.isArray(resp?.refMap)
+            ? resp.refMap
+            : [];
+
+        const cached = globalActionCache.get(tab.id, currentUrl, domRevision);
+        let ranked: {
+          candidates: ActionableCandidate[];
+          topCandidate: ActionableCandidate | null;
+          embeddings: Float32Array[];
+        };
+
+        if (cached && cached.elements && cached.embeddings) {
+          ranked = rankActionableElements(cached.elements, intent, {
+            maxCandidates,
+            cachedEmbeddings: cached.embeddings,
+          });
+        } else {
+          ranked = rankActionableElements(elements, intent, { maxCandidates });
+          globalActionCache.set(tab.id, currentUrl, domRevision, elements, ranked.embeddings);
+        }
+
+        const candidateContent = formatCandidatesAsContent(
+          ranked.candidates,
+          intent,
+          elements.length,
+        );
+
+        basePayload.intent = intent;
+        basePayload.candidates = ranked.candidates;
+        basePayload.topCandidate = ranked.topCandidate;
+        basePayload.returnedCandidatesCount = ranked.candidates.length;
+        basePayload.totalActionableElements = elements.length;
+        basePayload.pageContent = candidateContent;
+        basePayload.isStale = false;
+        basePayload.domRevision = domRevision;
+
+        return {
+          content: [{ type: 'text', text: JSON.stringify(basePayload) }],
+          isError: false,
+        };
+      }
 
       // Normal path: return tree
       if (treeOk && !isSparse) {

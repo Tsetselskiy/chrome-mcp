@@ -16,6 +16,22 @@
   // Keep a weak map from ref id to elements
   if (!window.__claudeElementMap) window.__claudeElementMap = {};
   if (!window.__claudeRefCounter) window.__claudeRefCounter = 0;
+  if (typeof window.__claudeDomRevision !== 'number') {
+    window.__claudeDomRevision = 1;
+    try {
+      if (typeof MutationObserver !== 'undefined' && document.documentElement) {
+        const obs = new MutationObserver(() => {
+          window.__claudeDomRevision = (window.__claudeDomRevision || 1) + 1;
+        });
+        obs.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['disabled', 'aria-disabled', 'class', 'style', 'hidden', 'value'],
+        });
+      }
+    } catch (_) {}
+  }
 
   /**
    * Infer ARIA-like role from element
@@ -519,6 +535,66 @@
   }
 
   /**
+   * Find nearest heading or parent container context for an actionable element
+   * @param {Element} el
+   * @returns {string}
+   */
+  function findNearbyContext(el) {
+    const contextParts = [];
+    try {
+      // 1. Closest container: table row, form, fieldset, section, article, role container
+      const container = el.closest(
+        'tr, form, fieldset, section, article, [role="region"], [role="group"], [role="row"], li',
+      );
+      if (container) {
+        const legendOrHeader = container.querySelector(
+          'legend, caption, th, h1, h2, h3, h4, h5, h6, [role="heading"]',
+        );
+        if (legendOrHeader && legendOrHeader.textContent) {
+          const text = legendOrHeader.textContent.trim().replace(/\s+/g, ' ');
+          if (text) contextParts.push(text);
+        }
+      }
+      // 2. Preceding heading in DOM
+      let node = el;
+      while (node && contextParts.length < 2) {
+        let sibling = node.previousElementSibling;
+        while (sibling) {
+          if (/^h[1-6]$/i.test(sibling.tagName) || sibling.getAttribute('role') === 'heading') {
+            const t = sibling.textContent ? sibling.textContent.trim().replace(/\s+/g, ' ') : '';
+            if (t && !contextParts.includes(t)) contextParts.push(t);
+            break;
+          }
+          const nested = sibling.querySelector('h1, h2, h3, h4, h5, h6, [role="heading"]');
+          if (nested && nested.textContent) {
+            const t = nested.textContent.trim().replace(/\s+/g, ' ');
+            if (t && !contextParts.includes(t)) contextParts.push(t);
+            break;
+          }
+          sibling = sibling.previousElementSibling;
+        }
+        node = node.parentElement;
+      }
+    } catch (_) {}
+    return contextParts.slice(0, 2).join(' | ');
+  }
+
+  /**
+   * Construct composite descriptor for candidate
+   */
+  function buildCandidateDescriptor(role, name, ariaLabel, href, placeholder, type, context) {
+    const parts = [];
+    if (role) parts.push(role);
+    if (name) parts.push(`"${name}"`);
+    if (ariaLabel && ariaLabel !== name) parts.push(`label: "${ariaLabel}"`);
+    if (placeholder) parts.push(`placeholder: "${placeholder}"`);
+    if (type && type !== 'button' && type !== 'submit') parts.push(`type: "${type}"`);
+    if (context) parts.push(`context: ${context}`);
+    if (href) parts.push(`href: "${href}"`);
+    return parts.join(' ').replace(/\s+/g, ' ').trim();
+  }
+
+  /**
    * Traverse DOM and build pageContent lines; collect ref map for interactive nodes.
    * @param {Element} el
    * @param {number} depth
@@ -578,8 +654,30 @@
 
       // Only collect ref mapping for interactive elements to limit cost
       if (isInteractive(el) && refMap.length < REF_MAP_LIMIT) {
+        const ariaLabel = el.getAttribute('aria-label') || '';
+        const context = findNearbyContext(el);
+        const disabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
+        const descriptor = buildCandidateDescriptor(
+          role,
+          label,
+          ariaLabel,
+          href,
+          placeholder,
+          type,
+          context,
+        );
+
         refMap.push({
           ref: /** @type {string} */ (refId),
+          role,
+          name: label || '',
+          ariaLabel,
+          href: href || null,
+          placeholder: placeholder || null,
+          type: type || null,
+          context: context || null,
+          descriptor,
+          disabled,
           selector: generateSelector(el),
           rect: {
             x: rect.x,
@@ -587,6 +685,7 @@
             width: rect.width,
             height: rect.height,
           },
+          coordinates: { x: cx, y: cy },
         });
       }
     }
@@ -672,6 +771,8 @@
           durationMs: Math.round(end - start),
         },
         refMap,
+        actionableElements: refMap,
+        domRevision: window.__claudeDomRevision || 1,
       };
     } catch (err) {
       throw new Error(
@@ -701,7 +802,11 @@
   function resolveRef(ref) {
     const map = window.__claudeElementMap || {};
     const weak = map[ref];
-    return weak && typeof weak.deref === 'function' ? weak.deref() : null;
+    const el = weak && typeof weak.deref === 'function' ? weak.deref() : null;
+    if (el && el.isConnected === false) {
+      return null;
+    }
+    return el;
   }
 
   function dispatchHoverEvents(el) {
@@ -1041,6 +1146,46 @@
           return true;
         }
         sendResponse({ success: true, ...result });
+        return true;
+      }
+      if (request && request.action === 'getActionableElements') {
+        const result = __generateAccessibilityTree('interactive', {
+          maxDepth: request.depth,
+          refId: request.refId,
+        });
+        if (result && result.error) {
+          sendResponse({ success: false, error: result.error });
+          return true;
+        }
+        sendResponse({
+          success: true,
+          actionableElements: result.actionableElements || result.refMap || [],
+          domRevision: window.__claudeDomRevision || 1,
+          url: location.href,
+          viewport: result.viewport,
+          stats: result.stats,
+        });
+        return true;
+      }
+      if (request && request.action === 'checkStaleRefs') {
+        const refs = Array.isArray(request.refs) ? request.refs : [];
+        const staleRefs = [];
+        const validRefs = [];
+        for (const ref of refs) {
+          const el = resolveRef(ref);
+          if (!el || !el.isConnected) {
+            staleRefs.push(ref);
+          } else {
+            validRefs.push(ref);
+          }
+        }
+        sendResponse({
+          success: true,
+          isStale: staleRefs.length > 0,
+          staleRefs,
+          validRefs,
+          domRevision: window.__claudeDomRevision || 1,
+        });
         return true;
       }
       if (request && request.action === 'ensureRefForSelector') {

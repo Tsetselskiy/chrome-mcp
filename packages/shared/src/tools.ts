@@ -16,6 +16,7 @@ export const TOOL_NAMES = {
     FILL: 'chrome_fill_or_select',
     REQUEST_ELEMENT_SELECTION: 'chrome_request_element_selection',
     GET_INTERACTIVE_ELEMENTS: 'chrome_get_interactive_elements',
+    GET_ACTIONABLE_CANDIDATES: 'chrome_get_actionable_candidates',
     NETWORK_CAPTURE: 'chrome_network_capture',
     // Legacy tool names (kept for internal use, not exposed in TOOL_SCHEMAS)
     NETWORK_CAPTURE_START: 'chrome_network_capture_start',
@@ -248,8 +249,47 @@ export const TOOL_SCHEMAS: Tool[] = [
           type: 'number',
           description: 'Target window ID to pick active tab when tabId is omitted.',
         },
+        intent: {
+          type: 'string',
+          description:
+            'Natural-language interaction intent (e.g., "activate primary service", "search cluster", "submit allocation"). When provided, semantically ranks actionable UI elements and returns a compact Top-N candidate set with existing refs.',
+        },
+        maxCandidates: {
+          type: 'number',
+          description:
+            'Maximum number of semantically retrieved candidates to return when intent is provided (default: 5).',
+        },
       },
       required: [],
+    },
+  },
+  {
+    name: TOOL_NAMES.BROWSER.GET_ACTIONABLE_CANDIDATES,
+    description:
+      'Semantically retrieve and rank actionable UI element candidates matching a natural-language interaction intent (e.g., "activate the primary service", "search cluster", "submit allocation"). Returns a compact Top-N candidate set with existing refs (e.g., "ref_1") so the main LLM can choose the target and execute actions via chrome_computer or chrome_click_element/chrome_fill_or_select without inspecting full page trees.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        intent: {
+          type: 'string',
+          description:
+            'Natural-language interaction intent describing the target action or element.',
+        },
+        maxCandidates: {
+          type: 'number',
+          description:
+            'Maximum number of semantically retrieved candidates to return (default: 5).',
+        },
+        tabId: {
+          type: 'number',
+          description: 'Target an existing tab by ID (default: active tab).',
+        },
+        windowId: {
+          type: 'number',
+          description: 'Target window ID to pick active tab when tabId is omitted.',
+        },
+      },
+      required: ['intent'],
     },
   },
   {

@@ -24,9 +24,10 @@ if (window.__FILL_HELPER_INITIALIZED__) {
         } catch (e) {
           // ignore
         }
-        if (!element || !(element instanceof Element)) {
+        if (!element || !(element instanceof Element) || element.isConnected === false) {
           return {
-            error: `Element ref "${ref}" not found. Please call chrome_read_page first and ensure the ref is still valid.`,
+            error: `Element ref "${ref}" not found or is stale/disconnected from DOM. Please call chrome_read_page or chrome_get_actionable_candidates to get fresh refs.`,
+            stale: true,
           };
         }
       } else {
