@@ -1,31 +1,33 @@
 {
-  "scenario": "longer-multipage-workflow",
+  "scenario": "dynamic-multistep-interaction",
   "taskSuccess": true,
   "failureReason": null,
-  "totalMcpCalls": 9,
+  "totalMcpCalls": 14,
   "lowLevelJsCalls": 0,
-  "mcpRoundTripTimeMs": 8253.32,
+  "mcpRoundTripTimeMs": 2600.45,
   "browserExecutionTimeMs": null,
-  "wallClockDurationMs": 51344.31,
-  "pageInspectionCalls": 3,
-  "repeatedPageInspections": 0,
+  "wallClockDurationMs": 59567.8,
+  "pageInspectionCalls": 7,
+  "repeatedPageInspections": 2,
   "retries": 0,
   "toolBreakdown": {
     "get_windows_and_tabs": 1,
-    "chrome_navigate": 1,
-    "chrome_read_page": 3,
-    "chrome_click_element": 2,
-    "chrome_fill_or_select": 2
+    "chrome_get_web_content": 2,
+    "chrome_navigate": 2,
+    "chrome_read_page": 4,
+    "chrome_fill_or_select": 2,
+    "chrome_get_actionable_candidates": 1,
+    "chrome_click_element": 2
   },
   "metadata": {},
   "events": [
     {
       "index": 1,
-      "timestamp": "2026-09-14T12:02:43.529Z",
+      "timestamp": "2026-09-14T13:29:20.568Z",
       "name": "get_windows_and_tabs",
       "argsSummary": {},
-      "scopeKey": "tab:2022050427",
-      "durationMs": 13.09,
+      "scopeKey": "tab:2022050429",
+      "durationMs": 13.81,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -47,14 +49,44 @@
     },
     {
       "index": 2,
-      "timestamp": "2026-09-14T12:02:45.371Z",
-      "name": "chrome_navigate",
+      "timestamp": "2026-09-14T13:29:31.191Z",
+      "name": "chrome_get_web_content",
       "argsSummary": {
-        "url": "http://localhost:12399/multihop/site-a.html",
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 26.98,
+      "durationMs": 320.84,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "textContent",
+          "article",
+          "metadata"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 3,
+      "timestamp": "2026-09-14T13:29:33.245Z",
+      "name": "chrome_navigate",
+      "argsSummary": {
+        "url": "http://localhost:12399/dynamic/index.html",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 27.44,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -76,55 +108,14 @@
       }
     },
     {
-      "index": 3,
-      "timestamp": "2026-09-14T12:02:47.292Z",
-      "name": "chrome_read_page",
-      "argsSummary": {
-        "tabId": 2022050429
-      },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 22.74,
-      "isError": false,
-      "error": null,
-      "isLowLevelJs": false,
-      "isInspection": true,
-      "isMutation": false,
-      "retried": false,
-      "resultMeta": {
-        "keys": [
-          "success",
-          "filter",
-          "pageContent",
-          "tips",
-          "viewport",
-          "stats",
-          "refMapCount",
-          "sparse",
-          "depth",
-          "focus",
-          "markedElements",
-          "elements",
-          "count",
-          "fallbackUsed",
-          "fallbackSource",
-          "reason"
-        ],
-        "batchSize": 1,
-        "timingAttribution": "single-http-roundtrip",
-        "missingResponse": false,
-        "transportError": false
-      }
-    },
-    {
       "index": 4,
-      "timestamp": "2026-09-14T12:02:53.130Z",
-      "name": "chrome_click_element",
+      "timestamp": "2026-09-14T13:29:34.725Z",
+      "name": "chrome_navigate",
       "argsSummary": {
-        "ref": "ref_23",
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 4025.56,
+      "durationMs": 26.24,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -135,9 +126,9 @@
         "keys": [
           "success",
           "message",
-          "elementInfo",
-          "navigationOccurred",
-          "clickMethod"
+          "tabId",
+          "windowId",
+          "url"
         ],
         "batchSize": 1,
         "timingAttribution": "single-http-roundtrip",
@@ -147,13 +138,13 @@
     },
     {
       "index": 5,
-      "timestamp": "2026-09-14T12:02:54.261Z",
+      "timestamp": "2026-09-14T13:29:36.213Z",
       "name": "chrome_read_page",
       "argsSummary": {
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 7.17,
+      "durationMs": 21.28,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -187,15 +178,15 @@
     },
     {
       "index": 6,
-      "timestamp": "2026-09-14T12:02:56.105Z",
+      "timestamp": "2026-09-14T13:29:38.616Z",
       "name": "chrome_fill_or_select",
       "argsSummary": {
         "ref": "ref_13",
         "tabId": 2022050429,
-        "value": "SHP-88301"
+        "value": "us-east"
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 430.1,
+      "durationMs": 128.81,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -216,26 +207,32 @@
     },
     {
       "index": 7,
-      "timestamp": "2026-09-14T12:02:58.105Z",
-      "name": "chrome_fill_or_select",
+      "timestamp": "2026-09-14T13:29:42.122Z",
+      "name": "chrome_get_actionable_candidates",
       "argsSummary": {
-        "ref": "ref_16",
         "tabId": 2022050429,
-        "value": "BENCHMARK-CODE-9204"
+        "intent": "select US-East Production Primary"
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 524.81,
+      "durationMs": 22.87,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
-      "isInspection": false,
-      "isMutation": true,
+      "isInspection": true,
+      "isMutation": false,
       "retried": false,
       "resultMeta": {
         "keys": [
           "success",
-          "message",
-          "elementInfo"
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
+          "pageContent",
+          "isStale",
+          "domRevision",
+          "viewport"
         ],
         "batchSize": 1,
         "timingAttribution": "single-http-roundtrip",
@@ -245,43 +242,13 @@
     },
     {
       "index": 8,
-      "timestamp": "2026-09-14T12:03:04.111Z",
-      "name": "chrome_click_element",
-      "argsSummary": {
-        "ref": "ref_17",
-        "tabId": 2022050429
-      },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 3184.63,
-      "isError": false,
-      "error": null,
-      "isLowLevelJs": false,
-      "isInspection": false,
-      "isMutation": true,
-      "retried": false,
-      "resultMeta": {
-        "keys": [
-          "success",
-          "message",
-          "elementInfo",
-          "navigationOccurred",
-          "clickMethod"
-        ],
-        "batchSize": 1,
-        "timingAttribution": "single-http-roundtrip",
-        "missingResponse": false,
-        "transportError": false
-      }
-    },
-    {
-      "index": 9,
-      "timestamp": "2026-09-14T12:03:05.794Z",
+      "timestamp": "2026-09-14T13:29:43.823Z",
       "name": "chrome_read_page",
       "argsSummary": {
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 18.24,
+      "durationMs": 6.85,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -312,14 +279,213 @@
         "missingResponse": false,
         "transportError": false
       }
+    },
+    {
+      "index": 9,
+      "timestamp": "2026-09-14T13:29:46.853Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_27",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 791.85,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 10,
+      "timestamp": "2026-09-14T13:29:48.521Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 18.11,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 11,
+      "timestamp": "2026-09-14T13:29:50.401Z",
+      "name": "chrome_fill_or_select",
+      "argsSummary": {
+        "ref": "ref_35",
+        "tabId": 2022050429,
+        "value": 8
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 134.9,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 12,
+      "timestamp": "2026-09-14T13:29:52.872Z",
+      "name": "chrome_click_element",
+      "argsSummary": {
+        "ref": "ref_36",
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 1055.38,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": false,
+      "isMutation": true,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "message",
+          "elementInfo",
+          "navigationOccurred",
+          "clickMethod"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 13,
+      "timestamp": "2026-09-14T13:29:58.438Z",
+      "name": "chrome_read_page",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 18.72,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "filter",
+          "pageContent",
+          "tips",
+          "viewport",
+          "stats",
+          "refMapCount",
+          "sparse",
+          "depth",
+          "focus",
+          "markedElements",
+          "elements",
+          "count",
+          "fallbackUsed",
+          "fallbackSource",
+          "reason"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 14,
+      "timestamp": "2026-09-14T13:30:01.646Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 13.35,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "textContent",
+          "article",
+          "metadata"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
     }
   ],
   "benchmarkLayer": "agent-task-level",
   "taskDefinition": {
-    "id": "longer-multipage-workflow",
-    "name": "Longer Multi-Page Workflow: Dispatch & Gateway Authorization",
-    "category": "longer-multipage",
-    "prompt": "Navigate to the Origin Hub dispatch manifest at http://localhost:12399/multihop/site-a.html. Find the transfer auth token and shipment ID. Then proceed to the Fulfillment Gateway at http://localhost:12399/multihop/site-b.html, enter both the shipment ID and transfer auth token into the authorization form, and authorize the dispatch. Confirm that authorization code DISPATCHED-OK-2026 is displayed."
+    "id": "dynamic-multistep-interaction",
+    "name": "Dynamic Multi-Step Interaction: Cluster Allocation",
+    "category": "dynamic-multistep",
+    "prompt": "Navigate to the Cluster Orchestrator at http://localhost:12399/dynamic/index.html. Search for cluster \"us-east\", select the \"US-East Production Primary\" cluster from the dynamically filtered results, set the allocation node count to 8, and submit the allocation. Confirm that allocation reference ALLOC-8891 is displayed."
   },
   "agentMetadata": {
     "model": "Gemini 3.8 Flash High",
@@ -331,9 +497,9 @@
       "platform": "win32"
     },
     "condition": "AFTER",
-    "sourceSha": "f42a9db",
+    "sourceSha": "1944624",
     "chromeVersion": "152.0.7977.83",
     "os": "win32 x64",
-    "runIndex": "1"
+    "runIndex": "3"
   }
 }

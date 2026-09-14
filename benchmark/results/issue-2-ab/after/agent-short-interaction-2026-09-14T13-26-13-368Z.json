@@ -2,30 +2,31 @@
   "scenario": "short-interaction",
   "taskSuccess": true,
   "failureReason": null,
-  "totalMcpCalls": 6,
+  "totalMcpCalls": 7,
   "lowLevelJsCalls": 0,
-  "mcpRoundTripTimeMs": 3995.57,
+  "mcpRoundTripTimeMs": 1906.93,
   "browserExecutionTimeMs": null,
-  "wallClockDurationMs": 41460.35,
-  "pageInspectionCalls": 2,
-  "repeatedPageInspections": 0,
+  "wallClockDurationMs": 46672.52,
+  "pageInspectionCalls": 4,
+  "repeatedPageInspections": 2,
   "retries": 0,
   "toolBreakdown": {
     "get_windows_and_tabs": 1,
-    "chrome_tabs_create": 1,
     "chrome_navigate": 1,
-    "chrome_read_page": 2,
-    "chrome_click_element": 1
+    "chrome_get_actionable_candidates": 1,
+    "chrome_get_web_content": 2,
+    "chrome_click_element": 1,
+    "chrome_read_page": 1
   },
   "metadata": {},
   "events": [
     {
       "index": 1,
-      "timestamp": "2026-09-14T11:57:10.516Z",
+      "timestamp": "2026-09-14T13:25:37.201Z",
       "name": "get_windows_and_tabs",
       "argsSummary": {},
-      "scopeKey": "tab:2022050427",
-      "durationMs": 12.44,
+      "scopeKey": "tab:2022050448",
+      "durationMs": 14.15,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -47,45 +48,14 @@
     },
     {
       "index": 2,
-      "timestamp": "2026-09-14T11:57:19.598Z",
-      "name": "chrome_tabs_create",
-      "argsSummary": {
-        "url": "http://localhost:12399/short/index.html"
-      },
-      "scopeKey": "tab:2022050429",
-      "durationMs": 158.41,
-      "isError": false,
-      "error": null,
-      "isLowLevelJs": false,
-      "isInspection": false,
-      "isMutation": false,
-      "retried": false,
-      "resultMeta": {
-        "keys": [
-          "success",
-          "message",
-          "groupId",
-          "tabId",
-          "windowId",
-          "url",
-          "title"
-        ],
-        "batchSize": 1,
-        "timingAttribution": "single-http-roundtrip",
-        "missingResponse": false,
-        "transportError": false
-      }
-    },
-    {
-      "index": 3,
-      "timestamp": "2026-09-14T11:57:24.073Z",
+      "timestamp": "2026-09-14T13:25:50.465Z",
       "name": "chrome_navigate",
       "argsSummary": {
         "url": "http://localhost:12399/short/index.html",
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 31.71,
+      "durationMs": 44.7,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -107,14 +77,15 @@
       }
     },
     {
-      "index": 4,
-      "timestamp": "2026-09-14T11:57:27.823Z",
-      "name": "chrome_read_page",
+      "index": 3,
+      "timestamp": "2026-09-14T13:25:54.772Z",
+      "name": "chrome_get_actionable_candidates",
       "argsSummary": {
-        "tabId": 2022050429
+        "tabId": 2022050429,
+        "intent": "activate primary service"
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 47.13,
+      "durationMs": 20.13,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -124,21 +95,45 @@
       "resultMeta": {
         "keys": [
           "success",
-          "filter",
+          "intent",
+          "candidates",
+          "topCandidate",
+          "returnedCandidatesCount",
+          "totalActionableElements",
           "pageContent",
-          "tips",
-          "viewport",
-          "stats",
-          "refMapCount",
-          "sparse",
-          "depth",
-          "focus",
-          "markedElements",
-          "elements",
-          "count",
-          "fallbackUsed",
-          "fallbackSource",
-          "reason"
+          "isStale",
+          "domRevision",
+          "viewport"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 4,
+      "timestamp": "2026-09-14T13:25:58.703Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 29.16,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "textContent",
+          "article",
+          "metadata"
         ],
         "batchSize": 1,
         "timingAttribution": "single-http-roundtrip",
@@ -148,14 +143,14 @@
     },
     {
       "index": 5,
-      "timestamp": "2026-09-14T11:57:36.111Z",
+      "timestamp": "2026-09-14T13:26:02.042Z",
       "name": "chrome_click_element",
       "argsSummary": {
-        "ref": "ref_12",
+        "ref": "ref_6",
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 3720.77,
+      "durationMs": 1426.14,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -178,13 +173,43 @@
     },
     {
       "index": 6,
-      "timestamp": "2026-09-14T11:57:37.477Z",
+      "timestamp": "2026-09-14T13:26:04.744Z",
+      "name": "chrome_get_web_content",
+      "argsSummary": {
+        "tabId": 2022050429
+      },
+      "scopeKey": "tab:2022050429",
+      "durationMs": 354.08,
+      "isError": false,
+      "error": null,
+      "isLowLevelJs": false,
+      "isInspection": true,
+      "isMutation": false,
+      "retried": false,
+      "resultMeta": {
+        "keys": [
+          "success",
+          "url",
+          "title",
+          "textContent",
+          "article",
+          "metadata"
+        ],
+        "batchSize": 1,
+        "timingAttribution": "single-http-roundtrip",
+        "missingResponse": false,
+        "transportError": false
+      }
+    },
+    {
+      "index": 7,
+      "timestamp": "2026-09-14T13:26:06.697Z",
       "name": "chrome_read_page",
       "argsSummary": {
         "tabId": 2022050429
       },
       "scopeKey": "tab:2022050429",
-      "durationMs": 25.11,
+      "durationMs": 18.57,
       "isError": false,
       "error": null,
       "isLowLevelJs": false,
@@ -234,7 +259,7 @@
       "platform": "win32"
     },
     "condition": "AFTER",
-    "sourceSha": "f42a9db",
+    "sourceSha": "1944624",
     "chromeVersion": "152.0.7977.83",
     "os": "win32 x64",
     "runIndex": "1"

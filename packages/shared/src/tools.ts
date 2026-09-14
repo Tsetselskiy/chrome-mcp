@@ -222,10 +222,28 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.READ_PAGE,
     description:
-      'Get an accessibility tree representation of visible elements on the page. Only returns elements that are visible in the viewport. Optionally filter for only interactive elements.\nTip: If the returned elements do not include the specific element you need, use the computer tool\'s screenshot (action="screenshot") to capture the element\'s on-screen coordinates, then operate by coordinates.',
+      'Inspect elements on the page to find targets for interaction. Preferred usage: when you have an interaction goal (e.g., click a button, fill an input, select an option), provide the "intent" parameter (e.g., "click submit button", "search products", "confirm checkout", "fill form field") or use chrome_get_actionable_candidates to semantically retrieve a compact ranked candidate set with refs. Inspecting the full page tree without intent is much larger and should only be used as a fallback when semantic retrieval does not return the desired target or when you need the complete structural overview of the page.\nTip: If the returned elements do not include the specific element you need, use the computer tool\'s screenshot (action="screenshot") to capture the element\'s on-screen coordinates, then operate by coordinates.',
     inputSchema: {
       type: 'object',
       properties: {
+        intent: {
+          type: 'string',
+          description:
+            'Natural-language interaction intent (e.g., "click submit button", "search products", "confirm checkout", "fill form field"). When looking for a specific control or action, provide this parameter to semantically retrieve and rank matching candidates with refs instead of fetching the full page tree.',
+        },
+        maxCandidates: {
+          type: 'number',
+          description:
+            'Maximum number of semantically retrieved candidates to return when intent is provided (default: 5).',
+        },
+        tabId: {
+          type: 'number',
+          description: 'Target an existing tab by ID (default: active tab).',
+        },
+        windowId: {
+          type: 'number',
+          description: 'Target window ID to pick active tab when tabId is omitted.',
+        },
         filter: {
           type: 'string',
           description:
@@ -241,24 +259,6 @@ export const TOOL_SCHEMAS: Tool[] = [
           description:
             'Focus on the subtree rooted at this element refId (e.g., "ref_12"). The refId must come from a recent chrome_read_page response in the same tab (refs may expire).',
         },
-        tabId: {
-          type: 'number',
-          description: 'Target an existing tab by ID (default: active tab).',
-        },
-        windowId: {
-          type: 'number',
-          description: 'Target window ID to pick active tab when tabId is omitted.',
-        },
-        intent: {
-          type: 'string',
-          description:
-            'Natural-language interaction intent (e.g., "click submit button", "search products", "confirm checkout"). When provided, semantically ranks actionable UI elements and returns a compact Top-N candidate set with existing refs.',
-        },
-        maxCandidates: {
-          type: 'number',
-          description:
-            'Maximum number of semantically retrieved candidates to return when intent is provided (default: 5).',
-        },
       },
       required: [],
     },
@@ -266,14 +266,14 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.GET_ACTIONABLE_CANDIDATES,
     description:
-      'Semantically retrieve and rank actionable UI element candidates matching a natural-language interaction intent (e.g., "click submit button", "search products", "confirm checkout"). Returns a compact Top-N candidate set with existing refs (e.g., "ref_1") so the main LLM can choose the target and execute actions via chrome_computer or chrome_click_element/chrome_fill_or_select without inspecting full page trees.',
+      'Search and rank actionable UI elements matching an interaction intent. Prefer this tool whenever looking for a specific button, link, input, or control to act upon (e.g., "click submit button", "search products", "confirm checkout", "fill form field"). Returns a compact Top-N candidate set with refs (e.g., "ref_1") for direct execution with chrome_click_element, chrome_fill_or_select, or chrome_computer without needing to fetch or parse large page trees. Fall back to chrome_read_page without intent only if candidates do not match.',
     inputSchema: {
       type: 'object',
       properties: {
         intent: {
           type: 'string',
           description:
-            'Natural-language interaction intent describing the target action or element.',
+            'Natural-language interaction intent describing the target action or element (e.g., "click submit button", "search products", "confirm checkout", "fill form field").',
         },
         maxCandidates: {
           type: 'number',
@@ -295,7 +295,7 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.COMPUTER,
     description:
-      "Use a mouse and keyboard to interact with a web browser, and take screenshots.\n* Whenever you intend to click on an element like an icon, you should consult a read_page to determine the ref of the element before moving the cursor.\n* If you tried clicking on a program or link but it failed to load, even after waiting, try screenshot and then adjusting your click location so that the tip of the cursor visually falls on the element that you want to click.\n* Make sure to click any buttons, links, icons, etc with the cursor tip in the center of the element. Don't click boxes on their edges unless asked.",
+      "Use a mouse and keyboard to interact with a web browser, and take screenshots.\n* Whenever you intend to click or interact with an element, prefer chrome_get_actionable_candidates or chrome_read_page with \"intent\" to determine the ref of the element before moving the cursor.\n* If you tried clicking on a program or link but it failed to load, even after waiting, try screenshot and then adjusting your click location so that the tip of the cursor visually falls on the element that you want to click.\n* Make sure to click any buttons, links, icons, etc with the cursor tip in the center of the element. Don't click boxes on their edges unless asked.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -313,7 +313,7 @@ export const TOOL_SCHEMAS: Tool[] = [
         ref: {
           type: 'string',
           description:
-            'Element ref from chrome_read_page. For click/scroll/scroll_to/key/type and drag end when provided; takes precedence over coordinates.',
+            'Element ref from chrome_get_actionable_candidates or chrome_read_page. For click/scroll/scroll_to/key/type and drag end when provided; takes precedence over coordinates.',
         },
         coordinates: {
           type: 'object',
@@ -968,7 +968,7 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.CLICK,
     description:
-      'Click on an element in a web page. Supports multiple targeting methods: CSS selector, XPath, element ref (from chrome_read_page), or viewport coordinates. More focused than chrome_computer for simple click operations.',
+      'Click on an element in a web page. Supports multiple targeting methods: CSS selector, XPath, element ref (obtained from chrome_get_actionable_candidates or chrome_read_page), or viewport coordinates. More focused than chrome_computer for simple click operations.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -983,7 +983,8 @@ export const TOOL_SCHEMAS: Tool[] = [
         },
         ref: {
           type: 'string',
-          description: 'Element ref from chrome_read_page (takes precedence over selector).',
+          description:
+            'Element ref from chrome_get_actionable_candidates or chrome_read_page (takes precedence over selector).',
         },
         coordinates: {
           type: 'object',
@@ -1040,7 +1041,7 @@ export const TOOL_SCHEMAS: Tool[] = [
   {
     name: TOOL_NAMES.BROWSER.FILL,
     description:
-      'Fill or select a form element on a web page. Supports input, textarea, select, checkbox, and radio elements. Use CSS selector, XPath, or element ref to target the element.',
+      'Fill or select a form element on a web page. Supports input, textarea, select, checkbox, and radio elements. Use CSS selector, XPath, or element ref (obtained from chrome_get_actionable_candidates or chrome_read_page) to target the element.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1055,7 +1056,8 @@ export const TOOL_SCHEMAS: Tool[] = [
         },
         ref: {
           type: 'string',
-          description: 'Element ref from chrome_read_page (takes precedence over selector).',
+          description:
+            'Element ref from chrome_get_actionable_candidates or chrome_read_page (takes precedence over selector).',
         },
         value: {
           type: ['string', 'number', 'boolean'],
